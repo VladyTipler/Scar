@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "scar",
+  "version": "0.1.0",
+  "description": "Every bug leaves a defense: reusable failure classes and executable completion checks.",
+  "author": { "name": "VladyTipler", "url": "https://github.com/VladyTipler" },
+  "repository": "https://github.com/VladyTipler/Scar",
+  "extensions": {
+    "com.openai": {
+      "skills": "./skills/",
+      "hooks": "./hooks/native.json",
+      "interface": { "displayName": "Scar", "shortDescription": "Learn failure classes. Verify every change.", "category": "Productivity" }
+    }
+  }
+}

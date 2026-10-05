@@ -1,0 +1,24 @@
+{
+  "name": "scar-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/unit.test.mjs tests/discovery.test.mjs tests/adversarial.test.mjs tests/context.test.mjs",
+    "test:feature": "node --test tests/workflow.test.mjs tests/transport.test.mjs tests/sharing.test.mjs tests/nexus.test.mjs tests/final-audit.test.mjs tests/package.test.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@babel/parser": "7.29.9",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@vue/compiler-sfc": "3.5.43",
+    "typescript": "6.0.3",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

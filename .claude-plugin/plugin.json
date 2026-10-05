@@ -1,0 +1,8 @@
+{
+  "name": "scar",
+  "version": "0.1.0",
+  "description": "Reusable failure classes and executable completion checks.",
+  "skills": "./skills/",
+  "hooks": "./hooks/native.json",
+  "mcpServers": "./.mcp.json"
+}

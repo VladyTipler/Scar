@@ -36,6 +36,8 @@ Required evidence:
 
 ## Coverage
 
+The complete catalog is processed by code. Preventive descriptions are ranked by task/path and paginated (eight hints initially); omitted descriptions never suppress execution. Tool reports and class source reads are bounded, with targeted evidence retrieval. Expanded classes retain historical fixture proofs and extension scope.
+
 Initial executable guards target well-defined JavaScript/TypeScript/Vue error shapes. Other languages remain supported through project checks and learned programmatic detectors. A catalog description without an executable protection is reported as a coverage gap, not a passing check.
 
 A detector protects only its declared scope. Model review complements executable checks for contextual risks; it cannot substitute for required command evidence.
