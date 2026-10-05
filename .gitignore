@@ -1,0 +1,8 @@
+node_modules/
+.scar/
+coverage/
+work/
+*.log
+.env
+.env.*
+!.env.example
