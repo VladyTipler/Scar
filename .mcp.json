@@ -1,3 +1,3 @@
 {
-  "mcpServers": { "scar": { "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/dist/mcp.cjs"] } }
+  "mcpServers": { "scar": { "command": "node", "args": ["./dist/mcp.cjs"], "cwd": "." } }
 }

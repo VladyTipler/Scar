@@ -13,7 +13,7 @@
 - [x] Expanded classes retain historical fixtures and extension scope.
 - [x] Package plugin, installation, references and native-host compatibility.
 - [x] Verify Windows and Linux; document actual macOS evidence limits.
-- [ ] Independent adversarial verification, simplify, publish and install.
+- [x] Independent adversarial verification, simplify, publish and install.
 - [x] Record durable results in existing Wiki page and index.
 - [ ] Clean and verify all temporary resources (local removal blocked by automatic approval review).
 

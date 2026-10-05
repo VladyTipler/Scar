@@ -17,6 +17,8 @@ Open a new chat. Review and trust Scar's four command hooks in Codex's Hooks UI 
 
 Validated with Codex 0.156.1. This release uses `.codex-plugin/plugin.json` and `.mcp.json`: that version intentionally skips plugin hooks for the newer root `plugin.json` format. The future-format example is kept under `docs/`; it is not the runtime entry point. [Host source](https://github.com/openai/codex/blob/rust-v0.156.1/codex-rs/core-plugins/src/loader.rs#L950), [hook trust documentation](https://learn.chatgpt.com/docs/hooks).
 
+Codex MCP arguments use a relative bundle path with a plugin-relative `cwd`; this loader does not expand hook path variables in MCP arguments. Claude's compatibility manifest supplies its own host path syntax. [MCP loader source](https://github.com/openai/codex/blob/rust-v0.156.1/codex-rs/codex-mcp/src/plugin_config.rs).
+
 ## Normal workflow
 
 Tell the agent what to build. Scar complements your existing SDD and TDD instructions, including superpowers.

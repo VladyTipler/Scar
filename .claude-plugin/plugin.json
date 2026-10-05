@@ -4,5 +4,5 @@
   "description": "Reusable failure classes and executable completion checks.",
   "skills": "./skills/",
   "hooks": "./hooks/native.json",
-  "mcpServers": "./.mcp.json"
+  "mcpServers": { "scar": { "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/dist/mcp.cjs"] } }
 }
