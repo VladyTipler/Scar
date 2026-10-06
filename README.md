@@ -49,9 +49,7 @@ Built-in AST guards detect empty catch blocks, async `forEach` callbacks and asy
 
 Existing npm test/typecheck/lint/build scripts, Go, Cargo and pytest checks are discoverable. Other tools and language-specific protection are added by the agent through executable project checks and proven personal detectors. An empty suite is incomplete. `READY` means the declared checks passed against fresh source, contract and catalog; it does not prove every possible bug is absent. Custom detector programs are trusted code with time/output limits, not a security sandbox.
 
-## Nexus and sharing
-
-[Nexus boundary adapters](integrations/nexus/README.md) forward explicit workspace/session context and reject unsuccessful completion through the same engine. They have real-process and MCP contract tests. Current Nexus command/MCP sidecars cannot inspect host workspaces or enforce Stop by installing this package alone. One host integration is required; **Nexus production activation is not part of this release**. Do not install native Codex hooks into an isolated Nexus hook sandbox and expect them to work.
+## Sharing a catalog across machines
 
 An optional SSH catalog transport provides one canonical personal catalog across machines without a daemon/database. The agent/admin configures its trusted host/runtime/home once in personal `connection.json`; individual projects need no config. A configured transport failure blocks verification instead of falling back to an empty local catalog. Local mode works offline. Transport data is processed by code, never dumped into the model context.
 
