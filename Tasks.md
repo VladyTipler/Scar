@@ -15,6 +15,15 @@
 - [x] Verify Windows and Linux; document actual macOS evidence limits.
 - [x] Independent adversarial verification, simplify, publish and install.
 - [x] Record durable results in existing Wiki page and index.
+- [x] Replace heavyweight lifecycle hooks with bounded cached context and fresh-status completion.
+- [x] Regressions: cancellation/process exit, canonical aliases and concurrent task generation.
+- [x] Recheck Windows/Linux suites and native bundled startup latency on local/WSL roots.
+- [x] Update the installed local copy and verify runtime hashes; catalog and native declaration preserved.
+- [x] Reload the desktop MCP connection and confirm the bounded hook revision.
+- [x] Repair Windows npm/npx false PASS; prove actual commands through PowerShell and bundled MCP.
+- [x] Reject unsupported cmd argument shapes; prove direct executable argument fidelity.
+- [x] Install command-evidence revision and verify a fresh MCP process with actual npm output.
+- [x] Reload the desktop MCP once more to activate the command-evidence revision in its existing connection.
 - [ ] Clean and verify all temporary resources (local removal blocked by automatic approval review).
 
 Activation remains separate: Codex requires one-time trust of the reviewed hooks; Nexus requires provider wiring and an authorized rollout. Neither is implied by package discovery or passing adapter tests.

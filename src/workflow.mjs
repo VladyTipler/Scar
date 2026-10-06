@@ -1,21 +1,19 @@
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { executeDetector } from './catalog.mjs';
 import { PersonalCatalog } from './sharing.mjs';
-import { snapshot, scan, builtins } from './workspace.mjs';
-import { atomicJson, readJson, digest, catalogHome, withLock } from './io.mjs';
+import { scan } from './workspace.mjs';
+import { atomicJson, readJson, catalogHome, withLock, projectGateFile } from './io.mjs';
+import { workspaceContext, evidenceBinding, freshStatus } from './evidence.mjs';
 import { runCheck, validateCheck } from './process.mjs';
 import { discoverChecks } from './discovery.mjs';
 import { preventionContext } from './presentation.mjs';
 
 export class Workflow {
-  constructor(home = catalogHome()) { this.catalog = new PersonalCatalog(home); }
+  constructor(home = catalogHome()) { this.home = home; this.catalog = new PersonalCatalog(home); }
   files(project) { const folder = path.join(path.resolve(project), '.scar'); return { contract: path.join(folder, 'contract.json'), report: path.join(folder, 'report.json'), review: path.join(folder, 'review.json'), lock: path.join(folder, 'verify.lock') }; }
-  async context(project) {
-    const state = await snapshot(project);
-    const catalog = await this.catalog.read();
-    const extensions = new Set(state.files.map(f => path.extname(f.path).toLowerCase()));
-    const classes = [...builtins, ...catalog.records].filter(c => c.extensions.some(e => extensions.has(e)));
-    return { state, catalog, classes, catalogDigest: digest({ version: 1, builtins, revision: catalog.revision }) };
+  async context(project, options = {}) {
+    return await workspaceContext(project, this.catalog, options);
   }
   async prepare(project, options) {
     const context = await this.context(project);
@@ -25,17 +23,20 @@ export class Workflow {
       checks.forEach(validateCheck);
       if (new Set(checks.map(c => c.id)).size !== checks.length) throw new Error('Duplicate check IDs.');
       if (options.focusPaths && (!Array.isArray(options.focusPaths) || options.focusPaths.some(p => typeof p !== 'string' || path.isAbsolute(p) || p.split(/[\\/]/).includes('..')))) throw new Error('focusPaths require safe relative paths.');
-      await atomicJson(this.files(project).contract, { schema: 1, task: options.task, checks, ...(options.focusPaths ? { focusPaths: options.focusPaths } : {}) });
+      const runId = randomUUID();
+      // Arm outside the workspace first: deleting .scar cannot bypass an active gate.
+      const gateFile = projectGateFile(this.home, context.state.root);
+      await withLock(`${gateFile}.lock`, async () => {
+        await atomicJson(gateFile, { schema: 1, active: true, runId });
+        await atomicJson(this.files(project).contract, { schema: 1, runId, task: options.task, checks, ...(options.focusPaths ? { focusPaths: options.focusPaths } : {}) });
+        await atomicJson(path.join(path.resolve(project), '.scar', 'context.json'), { schema: 1, ...preventionContext(context.classes, options.task, options.focusPaths) });
+      });
     }
     const contract = options || await readJson(this.files(project).contract, {});
     return { status: 'PREPARED', project: context.state.root, catalogRevision: context.catalog.revision, ...preventionContext(context.classes, contract.task, contract.focusPaths), errorCount: context.state.errors.length, errors: context.state.errors.slice(0, 4).map(e => ({ ...e, message: e.message.slice(0, 300) })) };
   }
-  async binding(project) {
-    const context = await this.context(project);
-    const contract = await readJson(this.files(project).contract, null);
-    if (contract && (contract.schema !== 1 || !Array.isArray(contract.checks) || typeof contract.task !== 'string')) throw new Error('Invalid verification contract.');
-    contract?.checks.forEach(validateCheck);
-    return { ...context, contract, binding: digest({ source: context.state.fingerprint, contract, catalog: context.catalogDigest }) };
+  async binding(project, options = {}) {
+    return await evidenceBinding(project, this.catalog, options);
   }
   async verify(project) {
     return await withLock(this.files(project).lock, async () => {
@@ -63,16 +64,8 @@ export class Workflow {
     await atomicJson(this.files(project).review, { binding, reason });
     return { status: 'REVIEWED', binding };
   }
-  async status(project) {
-    const { binding } = await this.binding(project);
-    const files = this.files(project);
-    const report = await readJson(files.report, null);
-    const review = await readJson(files.review, null);
-    if (!report) return { status: 'INCOMPLETE', reason: 'Verification has not run.' };
-    if (report.binding !== binding) return { status: 'STALE', reason: 'Source, contract or catalog changed.' };
-    if (report.status !== 'VERIFIED') return report;
-    if (review?.binding !== binding) return { ...report, status: 'INCOMPLETE', reason: 'A learning review is required for this source, contract and catalog.' };
-    return { ...report, status: 'READY', review: review.reason };
+  async status(project, options = {}) {
+    return await freshStatus(project, this.catalog, options);
   }
   async finish(project) { await this.verify(project); return await this.status(project); }
 }

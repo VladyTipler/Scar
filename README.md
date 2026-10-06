@@ -27,7 +27,11 @@ Tell the agent what to build. Scar complements your existing SDD and TDD instruc
 2. The agent develops through SDD + TDD. Scar's catalog traversals and detectors run as code, without model calls.
 3. `scar_verify` executes every applicable guard and the project's checks. Missing checks, parser/coverage errors, timeouts, failures and stale evidence prevent readiness.
 4. For a meaningful defect, the agent generalizes its class, searches analogues and publishes a detector through `scar_learn`. Original bad, independent bad and good fixtures must prove the declared protection.
-5. `scar_review` records the learning decision; `scar_finish` reruns verification. A trusted Stop hook checks the same engine before completion. Three repair prompts are allowed, then it stops with an explicit INCOMPLETE warning.
+5. `scar_review` records the learning decision; `scar_finish` reruns verification. A trusted Stop hook validates that evidence against current source, contract and catalog without rerunning tests. Three repair prompts are allowed, then it stops with an explicit INCOMPLETE warning.
+
+Startup hooks read only small Scar state files and cached prevention hints. They do not traverse source, parse code, run checks or contact a remote catalog. `scar_prepare` refreshes hints and arms the software completion gate; every preparation creates a new task generation. After successful Stop, the gate closes so ordinary conversations do not rerun it. **Zero-scan hooks cannot discover software edits when an agent skips preparation.** The skill requires preparation for every software task. Deleting workspace evidence does not clear an armed gate.
+
+Hooks have internal work budgets of 1 second for startup/prompt, 2 seconds for Stop, and 0.5 seconds for SessionEnd. A native supervisor allows a further second to terminate the worker and descendants. These are upper work budgets, not promised execution times. If fresh evidence cannot be established within the budget, Stop reports INCOMPLETE; it never accepts a cached READY without validation or starts a background verification job. See [hook design](docs/hook-latency.md).
 
 An expanded class retains its ID, old extension scope and historical fixture coverage. The personal catalog lives outside the installation at `<user-home>/.scar/catalog.json`, survives plugin upgrades and applies across projects. Project `.scar/` contains generated contracts and complete reports. Neither belongs in the public plugin repository.
 

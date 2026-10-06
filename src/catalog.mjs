@@ -31,9 +31,9 @@ export async function executeDetector(record, files) {
 }
 export class Catalog {
   constructor(home) { this.home = path.resolve(home); this.file = path.join(this.home, 'catalog.json'); }
-  async read() {
-    const established = await readJson(path.join(this.home, 'established.json'), null);
-    const data = await readJson(this.file, null);
+  async read(options = {}) {
+    const established = await readJson(path.join(this.home, 'established.json'), null, options);
+    const data = await readJson(this.file, null, options);
     if (!data) {
       if (established) throw new Error('Established catalog is missing; restore it instead of silently starting an empty catalog.');
       return { schema: 1, records: [], revision: digest({ schema: 1, records: [] }) };

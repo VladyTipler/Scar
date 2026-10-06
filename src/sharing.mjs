@@ -2,6 +2,7 @@ import path from 'node:path';
 import { runCheck } from './process.mjs';
 import { Catalog } from './catalog.mjs';
 import { readJson } from './io.mjs';
+import { abortable } from './abort.mjs';
 
 const shellQuote = value => `'${value.replaceAll("'", "'\\''")}'`;
 export function sshArguments(config) {
@@ -15,31 +16,31 @@ export function sshArguments(config) {
 }
 export class RemoteCatalog {
   constructor(config, invoke) {
-    this.invoke = invoke || (async input => {
-      const result = await runCheck({ id: 'catalog_ssh', command: config.executable || 'ssh', args: sshArguments(config), timeoutMs: 45_000 }, process.cwd(), JSON.stringify(input), {}, { maxOutputBytes: 64 * 1024 * 1024 });
+    this.invoke = invoke || (async (input, options) => {
+      const result = await runCheck({ id: 'catalog_ssh', command: config.executable || 'ssh', args: sshArguments(config), timeoutMs: 45_000 }, process.cwd(), JSON.stringify(input), {}, { maxOutputBytes: 64 * 1024 * 1024, signal: options?.signal });
       if (result.status !== 'PASS') throw new Error(`Configured SSH catalog unavailable (${result.status}): ${result.stderr}`);
       try { return JSON.parse(result.stdout); } catch { throw new Error('SSH catalog returned an invalid RPC response.'); }
     });
   }
-  async request(input) {
-    const result = await this.invoke(input);
+  async request(input, options = {}) {
+    const result = await abortable(() => this.invoke(input, options), options.signal);
     if (result?.error) throw new Error(result.error);
     if (result?.schema !== 1 || !Array.isArray(result.records) || typeof result.revision !== 'string') throw new Error('Invalid remote catalog response.');
     return result;
   }
-  async read() { return await this.request({ operation: 'read' }); }
+  async read(options) { return await this.request({ operation: 'read' }, options); }
   async learn(record, expectedRevision, options = {}) { return await this.request({ operation: 'learn', record, expectedRevision, options }); }
 }
 export class PersonalCatalog {
   constructor(home) { this.home = path.resolve(home); }
-  async backend() {
-    const config = await readJson(path.join(this.home, 'connection.json'), null);
+  async backend(options = {}) {
+    const config = await readJson(path.join(this.home, 'connection.json'), null, options);
     if (!config) return new Catalog(this.home);
     if (config.type !== 'ssh') throw new Error('Unsupported configured catalog transport.');
     sshArguments(config);
     return new RemoteCatalog(config);
   }
-  async read() { return await (await this.backend()).read(); }
+  async read(options) { return await (await this.backend(options)).read(options); }
   async learn(record, expectedRevision, options) { return await (await this.backend()).learn(record, expectedRevision, options); }
 }
 export async function catalogRpc(home, input) {

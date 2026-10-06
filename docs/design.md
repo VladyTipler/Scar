@@ -6,7 +6,7 @@ Approved scope: one cross-platform plugin for Codex and Nexus. Automatic integra
 
 - A portable Node.js core bundled into runnable plugin files. No npm install is required by plugin users.
 - One Scar skill: preparation before implementation, evidence-based completion, and class-level learning after findings.
-- Lifecycle hooks: inject relevant rules, identify software changes, and refuse successful closure without fresh verification and a learning review. Non-software tasks remain unaffected.
+- Lifecycle hooks: inject cached rules without source traversal and refuse closure of prepared software tasks without fresh verification and a learning review. Preparation arms the gate; zero-scan startup cannot infer unprepared software edits. Closed gates leave ordinary conversations unaffected.
 - MCP tools: the same prepare, verify, learn and finish operations, with structured results.
 - A catalog stored outside the plugin installation. Built-in generic guards plus personal classes with applicable scope, evidence, counterexamples and reusable detector code.
 - Existing repository checks remain the primary behavior/integration tests. Scar coordinates them rather than replacing the test runner.

@@ -56,15 +56,17 @@ test('native hook payloads block a changed no-Git project, allow verified source
   assert.match(start.hookSpecificOutput.additionalContext, /Scar/);
   await writeFile(path.join(root, 'README.md'), 'Documentation only');
   assert.equal((await hook({ ...event, hook_event_name: 'Stop' }, home)).decision, undefined);
+  const contract = path.join(home, 'contract-input.json');
+  await writeFile(contract, JSON.stringify({ task: 'Value', checks: [{ id: 'behavior', command: '$NODE', args: ['-e', 'process.exit(0)'] }] }));
+  await exec(process.execPath, [bin('cli'), 'prepare', root, '--home', home, '--contract', contract]);
   await writeFile(path.join(root, 'main.ts'), 'export const value=2;');
   assert.equal((await hook({ ...event, hook_event_name: 'Stop' }, home)).decision, 'block');
   // Compact/resume must not erase the evidence of pending changes.
   await hook({ ...event, hook_event_name: 'SessionStart', source: 'compact' }, home);
   assert.equal((await hook({ ...event, hook_event_name: 'Stop' }, home)).decision, 'block');
-  const contract = path.join(home, 'contract-input.json');
-  await writeFile(contract, JSON.stringify({ task: 'Value', checks: [{ id: 'behavior', command: '$NODE', args: ['-e', 'process.exit(0)'] }] }));
-  await exec(process.execPath, [bin('cli'), 'prepare', root, '--home', home, '--contract', contract]);
   await exec(process.execPath, [bin('cli'), 'review', root, '--home', home, '--reason', 'Checked the value and relevant error classes.']);
+  assert.equal((await hook({ ...event, hook_event_name: 'Stop' }, home)).decision, 'block', 'Review alone cannot execute checks');
+  await exec(process.execPath, [bin('cli'), 'finish', root, '--home', home]);
   assert.equal((await hook({ ...event, hook_event_name: 'Stop' }, home)).decision, undefined);
   assert.equal(JSON.parse(await readFile(path.join(root, '.scar/report.json'))).status, 'VERIFIED');
   await hook({ name: 'SessionEnd', payload: event }, home);
@@ -105,6 +107,8 @@ test('completion gate bounds automatic repairs without converting failure into a
   const root = await fixture(t, { 'main.ts': 'export const value=1;' });
   const event = {cwd:root,session_id:'bounded'};
   await hook({...event, hook_event_name:'SessionStart'}, home);
+  const { Workflow } = await import('../src/workflow.mjs');
+  await new Workflow(home).prepare(root, {task:'Bound repair attempts', checks:[]});
   await writeFile(path.join(root,'main.ts'), 'export const value=2;');
   for(let attempt=0;attempt<3;attempt++) assert.equal((await hook({...event,hook_event_name:'Stop',stop_hook_active:attempt>0},home)).decision,'block');
   const exhausted = await hook({...event,hook_event_name:'Stop',stop_hook_active:true},home);

@@ -1,5 +1,22 @@
 # Scar 0.1.0 verification
 
+## Windows command-evidence revision, 2026-10-06
+
+- A post-restart log inspection invalidated an earlier installed-MCP READY claim: npm's PowerShell shim emitted launcher errors and returned zero without running the intended tests. The directly executed 59-test hook revision evidence remains valid; that MCP npm report does not.
+- Windows npm/npx now select native cmd shims through PowerShell, terminate on launcher errors, require a native exit code and retain UTF-8 logs. The actual cause was missing PATHEXT in minimal MCP environments: a controlled probe restored native execution by adding PATHEXT; ComSpec alone did not help. Scar restores missing/empty PATHEXT and normalizes Windows environment keys. Warnings with an actual zero exit remain valid. Unsupported cmd argument shapes fail before execution rather than silently checking different input; direct Node checks preserve those arguments.
+- Eight subprocess regressions prove actual script execution through sentinel files, real failure exit7, UTF-8/warnings, a broken PowerShell shim on PATH, a missing native shim, npm/npx and explicit cmd variants, no READY for failing discovered checks, the real bundled MCP boundary, unsupported-argument rejection and the default minimal SDK environment without PATHEXT. Independent review passed all eight with no remaining blockers in this delta.
+- Windows: 21 unit + 46 feature/integration tests pass through actual npm launched by the installed MCP in its default minimal environment. Full logs contain those test/pass counts and zero failures; no empty-output PASS is used as evidence. Linux/WSL: 60 tests pass, with seven Windows-specific tests explicitly skipped. macOS remains unverified.
+- The generalized adjacent PowerShell invocation/unchecked-exit shape was learned privately with original-bad, two varied-bad and valid fixtures. It is bounded static protection; real subprocess regressions prove runtime behavior.
+
+## Bounded-hook revision, 2026-10-06
+
+- Windows: 21 unit + 38 feature/integration tests pass. Linux/WSL Node 24.13.1: all 59 tests pass. Fourteen hook-budget regressions cover no-source startup/end, no command execution in Stop, fresh changed/add/delete evidence, contract/catalog changes, same-input generations, evidence deletion, restart, closed-task prose, canonical path aliases and concurrent prepare/disarm.
+- Real native subprocess tests cancel a transport and kill a filesystem-stalled worker; recorded child PIDs no longer exist. No detached verification job is created.
+- Bundled startup/prompt/end commands measured 150–173 ms on Windows, including Node parent/worker startup. Local H: and original WSL UNC workspace were exercised. Samples are measurements, not latency guarantees; no full-source WSL verification benchmark is implied.
+- Hook bundle excludes TypeScript/Vue parsers (about 25 KB instead of 4.6 MB). Content hashes establish freshness; only parser results use an in-process bounded cache.
+- Active gate identity is canonical; prepare/publication and successful disarm share a lock. Independent review reproduced both original races, checked the fixes and independently passed all 14 hook regressions.
+- Preparation is required for every software task: zero-scan startup does not infer unprepared edits. Slow freshness validation returns INCOMPLETE within its work budget. GitHub publication, installed process reload and macOS execution are separate evidence boundaries.
+
 Validated 2026-10-05. Windows Node 24.13.1; Linux Node 22.22.3; Codex CLI 0.156.1.
 
 - Windows: `npm test` 21/21 and `npm run test:feature` 24/24 pass.
@@ -22,5 +39,7 @@ The Nexus bridge has real MCP and host-process boundary proof, including explici
 ## Resource accounting
 
 Passing tests close their subprocesses and remove fixtures. An earlier Windows test-cleanup failure left two empty fixture directories; the cleanup order is now fixed and the clean-package test passes. Final automatic approval review rejected local removal (`blocked by policy`, no detailed reason), so those directories and task scratch files remain preserved. No bypass was attempted. The generated projectless `work/` holds the read-only design-workflow reference clone, generated Codex schemas, Linux source archive and already-used private learning helper. The empty old `outputs/Scar/.git` migration remnant is also retained after an earlier cleanup rejection. These are outside the source and public package. Source, installed plugin, personal catalog and project reports are intentionally durable.
+
+The minimal-environment RED run also left one disposable npm fixture. Its owned stalled test process and descendants were terminated after checking their exact identities. Automatic approval review refused removal of the proven fixture with `blocked by policy`; it is preserved and not included in the public package. Subsequent passing tests close their processes and remove their fixtures normally.
 
 Disposable server validation workspaces, synthetic catalogs and their npm caches were removed after process checks and exact-path validation. No task containers or services were created.

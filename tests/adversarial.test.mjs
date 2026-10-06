@@ -82,6 +82,10 @@ test('native completion gate observes Dockerfile software changes in a no-Git pr
   const home = await fixture(t);
   const event = { cwd: root, session_id: 'adversarial-docker' };
   await hookEvent({ ...event, hook_event_name: 'SessionStart' }, home);
+  const flow = new Workflow(home);
+  await flow.prepare(root, { task: 'Change Docker runtime configuration', checks: [behavior] });
+  await flow.review(root, 'Reviewed Docker configuration and executable contract.');
+  await flow.finish(root);
   await writeFile(path.join(root, 'Dockerfile'), 'FROM node:24\nCMD ["node", "missing.mjs"]\n');
   const result = await hookEvent({ ...event, hook_event_name: 'Stop' }, home);
   assert.equal(result.decision, 'block', 'Runtime configuration changes require executable evidence too');
