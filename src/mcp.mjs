@@ -5,7 +5,7 @@ import { Workflow } from './workflow.mjs';
 import { hookEvent } from './hooks.mjs';
 import { publicCatalog, compactReport, publicationResult, reportDetails, preventionContext, classSource } from './presentation.mjs';
 const flow = new Workflow();
-const server = new McpServer({ name: 'scar', version: '0.1.0' });
+const server = new McpServer({ name: 'scar', version: '0.1.1' });
 const project = z.string().describe('Absolute workspace path on the same host as Scar.');
 const checkSchema = z.object({ id: z.string(), command: z.string(), args: z.array(z.string()), timeoutMs: z.number().int().optional() });
 function register(name, description, inputSchema, operation) {

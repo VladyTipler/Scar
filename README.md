@@ -21,6 +21,18 @@ Validated with Codex 0.156.1. This release uses `.codex-plugin/plugin.json` and 
 
 Codex MCP arguments use a relative bundle path with a plugin-relative `cwd`; this loader does not expand hook path variables in MCP arguments. Claude's compatibility manifest supplies its own host path syntax. [MCP loader source](https://github.com/openai/codex/blob/rust-v0.156.1/codex-rs/codex-mcp/src/plugin_config.rs).
 
+## Install in ZCode
+
+Prerequisite: Node.js 20+ available to ZCode. Runtime dependencies are bundled; no `npm install` or separate server is needed.
+
+1. Open **Plugin Marketplace → Add → Add Plugin Marketplace** and enter `VladyTipler/Scar` (or this repository's Git URL).
+2. In **Personal → scar-marketplace**, open **Scar** and click **Install**. For an existing installation, refresh that marketplace source and update Scar to **0.1.1**.
+3. Open a new task and select the **scar** skill. ZCode should discover one skill, the Scar MCP server with ten tools, and three hooks: `SessionStart`, `UserPromptSubmit`, `Stop`.
+
+ZCode selects `.zcode-plugin/plugin.json` and `hooks/zcode.json`. It does not emit `SessionEnd`. Instead, an allowed Stop removes only that session's bookkeeping; blocked or incomplete attempts retain their repair counter and the durable project gate. The next prompt/start recreates session bookkeeping. Abandoned sessions can leave a small record; no background cleanup or scan is scheduled. The personal catalog is never removed. Codex/Claude keep their four-hook declaration and SessionEnd behavior.
+
+Installation/discovery is not proof that the hooks execute in a live task. Check the host's hook/MCP status and try a disposable software task: prepare it, verify a failing check cannot finish, then repair it, review and finish. See [verification boundaries](docs/verification.md).
+
 ## Normal workflow
 
 Tell the agent what to build. Scar complements your existing SDD and TDD instructions, including superpowers.
@@ -62,6 +74,6 @@ npm test
 npm run test:feature
 ```
 
-On Windows run npm/npx through PowerShell. Tests cover real filesystem/process/MCP boundaries, no-Git learning and fresh-process reuse, stale reports, bounded context, prior-generation regression retention, native payloads and isolated bundles without `node_modules`. Windows and Linux runtime suites are exercised; macOS has not been exercised on a real host. See [verification evidence](docs/verification.md) for exact results and activation boundaries.
+On Windows run npm/npx through PowerShell. Tests cover real filesystem/process/MCP boundaries, no-Git learning and fresh-process reuse, stale reports, bounded context, prior-generation regression retention, native payloads and isolated bundles without `node_modules`. Windows and Linux runtime suites were exercised previously; the ZCode compatibility revision also runs the available suites and isolated bundled integration tests on macOS. Windows-only tests are skipped on macOS; this does not imply a live ZCode task was exercised. See [verification evidence](docs/verification.md) for exact results and activation boundaries.
 
 Source licensing remains to be selected. Bundled dependency licenses are preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

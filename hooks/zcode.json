@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\"", "commandWindows": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\"", "timeout": 30, "statusMessage": "Scar: loading failure classes" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\"", "commandWindows": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\"", "timeout": 30, "statusMessage": "Scar: refreshing failure classes" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\" --zcode", "commandWindows": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hook.cjs\" --zcode", "timeout": 600, "statusMessage": "Scar: verifying completion" }] }]
+  }
+}
