@@ -14,8 +14,13 @@ export async function cli(args) {
   }
   const homeIndex = flags.indexOf('--home');
   const home = homeIndex < 0 ? catalogHome() : flags[homeIndex + 1];
-  if (!project || !['prepare', 'verify', 'finish', 'status', 'review', 'learn', 'catalog', 'details'].includes(operation)) throw new Error('Usage: scar <prepare|verify|finish|status|review|learn|catalog|details> <absolute-project-or-record> [--home <catalog>] [--contract <json-file>] [--reason <text>]');
-  const flow = new Workflow(home);
+  if (!project || !['prepare', 'verify', 'finish', 'status', 'review', 'learn', 'catalog', 'details'].includes(operation)) throw new Error('Usage: scar <prepare|verify|finish|status|review|learn|catalog|details> <absolute-project-or-record> [--home <catalog>] [--contract <json-file>] [--reason <text>] [--session <host-session-id>] [--host-project <host-cwd>]');
+  const sessionIndex=flags.indexOf('--session'),hostIndex=flags.indexOf('--host-project');
+  if(sessionIndex>=0&&(!flags[sessionIndex+1]||flags[sessionIndex+1].startsWith('--')))throw new Error('--session requires a host session ID.');
+  if(hostIndex>=0&&(!flags[hostIndex+1]||flags[hostIndex+1].startsWith('--')))throw new Error('--host-project requires an absolute host cwd.');
+  if(hostIndex>=0&&sessionIndex<0)throw new Error('--host-project requires --session.');
+  const scope=sessionIndex<0?{}:{sessionId:flags[sessionIndex+1],hostProject:hostIndex<0?project:flags[hostIndex+1]};
+  const flow = new Workflow(home,scope);
   const option = name => { const index = flags.indexOf(name); return index < 0 ? undefined : flags[index + 1]; };
   const pagination = { ...(option('--offset') === undefined ? {} : { offset: Number(option('--offset')) }), ...(option('--limit') === undefined ? {} : { limit: Number(option('--limit')) }) };
   if (operation === 'catalog') return await publicCatalog(flow.catalog, { ...pagination, id: option('--id'), query: option('--query') });

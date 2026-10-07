@@ -2,10 +2,16 @@ import path from 'node:path';
 import { rm, realpath } from 'node:fs/promises';
 import { atomicJson, readJson, digest, catalogHome, projectGateFile, withLock } from './io.mjs';
 import { abortable } from './abort.mjs';
+import {bindingFile} from './task-scope.mjs';
 
 const contextOutput = (event, text) => ({ hookSpecificOutput: { hookEventName: event, additionalContext: text } });
 const instructions = 'Scar is enabled. For software tasks: scar_prepare before code, SDD + TDD, scar_verify, learn proven generalized guards, scar_review, scar_finish. Only fresh READY permits completion. Preparation activates the software gate; hooks do not infer edits without it. For non-software tasks do not create contracts. No Git or CI required.';
 export const hookBudgets = { SessionStart: 1000, UserPromptSubmit: 1000, Stop: 2000, SessionEnd: 500 };
+// UNC reads cross a host/share boundary. Keep a finite allowance for fresh
+// byte hashing; local work and lightweight hooks retain their short budgets.
+export function hookBudget(name, cwd) {
+  return name === 'Stop' && typeof cwd === 'string' && cwd.startsWith('\\\\') ? 15000 : hookBudgets[name];
+}
 
 export function hookFailure(event, error) {
   const reason = `Scar INCOMPLETE: ${error.message}. Run scar_prepare/scar_finish through MCP; do not claim verified completion.`;
@@ -24,7 +30,7 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
   options.signal?.addEventListener('abort', onAbort, { once: true });
   if (options.signal?.aborted) onAbort();
   const signal = controller.signal;
-  const timer = setTimeout(() => controller.abort(new Error(`Scar ${name} budget exhausted; freshness is unverified`)), options.budgetMs ?? hookBudgets[name]);
+  const timer = setTimeout(() => controller.abort(new Error(`Scar ${name} budget exhausted; freshness is unverified`)), options.budgetMs ?? hookBudget(name, event?.cwd));
   const io = { signal, maxBytes: 64 * 1024 };
   try {
     return await abortable(async () => {
@@ -40,7 +46,22 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
         const hints = cached?.schema === 1 && Array.isArray(cached.classes)
           ? cached.classes.slice(0, 8).map(c => `${c.id}: ${c.title}. ${c.prevention}`).join('\n').slice(0, 5200)
           : '';
-        return contextOutput(name, `${instructions}\n${hints ? `Cached prevention hints; scar_prepare refreshes applicability and the catalog:\n${hints}` : 'Call scar_prepare to discover applicable failure classes; no source scan runs in this hook.'}`);
+        return contextOutput(name, `${instructions}\nHost chat scope for every software tool: ${JSON.stringify({sessionId:event.session_id,hostProject:project})}. Pass this scope even when working in another project/worktree. Legacy unscoped calls share project state.\n${hints ? `Cached prevention hints; scar_prepare refreshes applicability and the catalog:\n${hints}` : 'Call scar_prepare to discover applicable failure classes; no source scan runs in this hook.'}`);
+      }
+      const refuse = async reason => {
+        const repairs = previous?.repairs || 0;
+        if (repairs >= 3) return { continue: false, stopReason: 'Scar verification remains INCOMPLETE.', systemMessage: `Scar INCOMPLETE: repair limit reached. ${reason}` };
+        await atomicJson(file, { ...previous, schema: 2, repairs: repairs + 1 }, io);
+        return { decision: 'block', reason };
+      };
+      const scopeFile=bindingFile(home,project,event.session_id);
+      const scope=await readJson(scopeFile,null,io);
+      if(scope){
+        if(!previous)return await refuse('Scar INCOMPLETE: session start was not observed for this chat.');
+        const {stopSession}=await import('./session-stop.mjs');
+        const reason=await stopSession(scope,scopeFile,event,home,io);
+        if(reason)return await refuse(reason);
+        await atomicJson(file,{schema:2,repairs:0},io);return {};
       }
       const canonical = await abortable(() => realpath(project), signal);
       const gateFile = projectGateFile(home, canonical);
@@ -51,12 +72,6 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
       // Preparation arms a durable gate outside the project. Deleting .scar
       // cannot bypass it; ordinary conversations have no active software gate.
       if (!gate && !contract) return {};
-      const refuse = async reason => {
-        const repairs = previous?.repairs || 0;
-        if (repairs >= 3) return { continue: false, stopReason: 'Scar verification remains INCOMPLETE.', systemMessage: `Scar INCOMPLETE: repair limit reached. ${reason}` };
-        await atomicJson(file, { ...previous, schema: 2, repairs: repairs + 1 }, io);
-        return { decision: 'block', reason };
-      };
       if (!contract || gate && contract.runId !== gate.runId) return await refuse('Scar INCOMPLETE: active verification contract is missing or changed. Call scar_prepare and scar_finish.');
       if (!previous) return await refuse('Scar INCOMPLETE: session start was not observed. Initialize SessionStart and finish the software contract.');
       const { freshStatus } = await import('./evidence.mjs');

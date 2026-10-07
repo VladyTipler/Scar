@@ -20,42 +20,54 @@ export async function snapshot(project, { signal, fs = {} } = {}) {
   const files = [];
   const entries = [];
   const errors = [];
-  async function walk(directory, relative = '') {
-    const children = (await abortable(() => io.readdir(directory, { withFileTypes: true }), signal)).sort((a, b) => a.name.localeCompare(b.name));
-    for (const child of children) {
-      signal?.throwIfAborted();
-      const name = path.posix.join(relative, child.name);
-      const absolute = path.join(directory, child.name);
-      if (child.isDirectory() && (excludedEverywhere.has(child.name) || !relative && excludedRoot.has(child.name))) continue;
-      if (relative === '.scar' && (evidenceFiles.has(child.name) || child.name.endsWith('.tmp') || child.name.endsWith('.lock'))) continue;
-      if (child.isSymbolicLink()) { errors.push({ file: name, message: 'Symlink is outside verified file coverage; replace it or explicitly narrow the project root.' }); entries.push([name, 'symlink']); continue; }
-      if (child.isDirectory()) { await walk(absolute, name); continue; }
-      if (!child.isFile()) continue;
-      if (archiveExtensions.has(path.extname(name).toLowerCase())) continue;
-      const info = await abortable(() => io.stat(absolute), signal);
-      if (info.size > 10 * 1024 * 1024) {
-        entries.push([name, `oversize:${info.size}`]);
-        errors.push({ file: name, message: 'File exceeds 10 MiB inspection limit; narrow the verification root.' });
-        continue;
+  const pending = [{ absolute: root, relative: '', directory: true }];
+  async function inspect({ absolute, relative, directory }) {
+    signal?.throwIfAborted();
+    if (directory) {
+      const children = await abortable(() => io.readdir(absolute, { withFileTypes: true }), signal);
+      for (const child of children) {
+        signal?.throwIfAborted();
+        const name = path.posix.join(relative, child.name);
+        const childPath = path.join(absolute, child.name);
+        if (child.isDirectory() && (excludedEverywhere.has(child.name) || !relative && excludedRoot.has(child.name))) continue;
+        if ((relative === '.scar' || /^\.scar\/sessions\/[a-f0-9]{64}$/.test(relative)) && (evidenceFiles.has(child.name) || child.name.endsWith('.tmp') || child.name.endsWith('.lock'))) continue;
+        if (child.isSymbolicLink()) { errors.push({ file: name, message: 'Symlink is outside verified file coverage; replace it or explicitly narrow the project root.' }); entries.push([name, 'symlink']); continue; }
+        if (child.isDirectory()) { pending.push({ absolute: childPath, relative: name, directory: true }); continue; }
+        if (!child.isFile()) continue;
+        if (archiveExtensions.has(path.extname(name).toLowerCase())) continue;
+        pending.push({ absolute: childPath, relative: name, directory: false });
       }
-      const bytes = await abortable(() => io.readFile(absolute, { signal }), signal);
-      entries.push([name, digest(bytes)]);
-      if (bytes.length > 10 * 1024 * 1024) {
-        errors.push({ file: name, message: 'File grew beyond 10 MiB inspection limit during reading.' });
-        continue;
-      }
-      let text;
-      if (bytes[0] === 0xff && bytes[1] === 0xfe) text = bytes.subarray(2).toString('utf16le');
-      else if (bytes[0] === 0xfe && bytes[1] === 0xff) {
-        const swapped = Buffer.from(bytes.subarray(2));
-        if (swapped.length % 2) { errors.push({ file: name, message: 'Malformed UTF-16 source.' }); continue; }
-        text = swapped.swap16().toString('utf16le');
-      } else if (!bytes.includes(0)) text = bytes.toString('utf8');
-      if (text !== undefined) files.push({ path: name, text });
-      else if (sourceExtensions.has(path.extname(name).toLowerCase())) errors.push({ file: name, message: 'Unsupported source encoding; convert to UTF-8 or UTF-16 with BOM.' });
+      return;
     }
+    const name = relative;
+    const info = await abortable(() => io.stat(absolute), signal);
+    if (info.size > 10 * 1024 * 1024) {
+      entries.push([name, `oversize:${info.size}`]);
+      errors.push({ file: name, message: 'File exceeds 10 MiB inspection limit; narrow the verification root.' });
+      return;
+    }
+    const bytes = await abortable(() => io.readFile(absolute, { signal }), signal);
+    entries.push([name, digest(bytes)]);
+    if (bytes.length > 10 * 1024 * 1024) {
+      errors.push({ file: name, message: 'File grew beyond 10 MiB inspection limit during reading.' });
+      return;
+    }
+    let text;
+    if (bytes[0] === 0xff && bytes[1] === 0xfe) text = bytes.subarray(2).toString('utf16le');
+    else if (bytes[0] === 0xfe && bytes[1] === 0xff) {
+      const swapped = Buffer.from(bytes.subarray(2));
+      if (swapped.length % 2) { errors.push({ file: name, message: 'Malformed UTF-16 source.' }); return; }
+      text = swapped.swap16().toString('utf16le');
+    } else if (!bytes.includes(0)) text = bytes.toString('utf8');
+    if (text !== undefined) files.push({ path: name, text });
+    else if (sourceExtensions.has(path.extname(name).toLowerCase())) errors.push({ file: name, message: 'Unsupported source encoding; convert to UTF-8 or UTF-16 with BOM.' });
   }
-  await walk(root);
+  // Bound filesystem pressure while hashing fresh bytes, including on UNC shares.
+  // Cancellation prevents scheduling the next batch; no metadata freshness cache.
+  while (pending.length) await Promise.all(pending.splice(0, 16).map(inspect));
+  entries.sort((a, b) => a[0].localeCompare(b[0]));
+  files.sort((a, b) => a.path.localeCompare(b.path));
+  errors.sort((a, b) => a.file.localeCompare(b.file) || a.message.localeCompare(b.message));
   return { root, files, entries, errors, fingerprint: digest(entries) };
 }
 export async function fingerprint(project) { return (await snapshot(project)).fingerprint; }

@@ -3,6 +3,7 @@ import ts from 'typescript';
 import { parse as parseVue } from '@vue/compiler-sfc';
 import { parse as parseJavaScript } from '@babel/parser';
 import { digest } from './io.mjs';
+import { applyExceptions } from './exceptions.mjs';
 
 import { snapshot, builtins } from './workspace-state.mjs';
 export { snapshot, fingerprint, builtins } from './workspace-state.mjs';
@@ -57,5 +58,6 @@ export async function scan(project, existingSnapshot) {
     analysisCache.set(key, { findings: localFindings, errors: localErrors });
     findings.push(...localFindings); errors.push(...localErrors);
   }
-  return { findings, errors, snapshot: state };
+  const approved = applyExceptions(state, findings);
+  return { findings: approved.findings, errors: [...errors, ...approved.errors], acceptedExceptions: approved.acceptedExceptions, snapshot: state };
 }

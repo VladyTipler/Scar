@@ -24,10 +24,10 @@ export async function atomicJson(file, value, { signal } = {}) {
   } finally { await rm(temporary, { force: true }); }
 }
 
-export const projectGateFile = (home, project) => {
+export const projectGateFile = (home, project, sessionId) => {
   const resolved = path.resolve(project);
   const identity = process.platform === 'win32' ? resolved.toLowerCase() : resolved;
-  return path.join(home, 'projects', `${digest(identity)}.json`);
+  return path.join(home, 'projects', `${digest(sessionId===undefined?identity:{project:identity,session:sessionId})}.json`);
 };
 
 export async function withLock(file, operation, { signal } = {}) {

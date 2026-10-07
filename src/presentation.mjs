@@ -47,11 +47,12 @@ export function compactReport(report) {
   const result = {
     status: report.status, binding: report.binding, reason: clip(report.reason, 500),
     findingCount: report.findings?.length || 0, errorCount: report.errors?.length || 0,
+    acceptedExceptionCount: report.acceptedExceptions?.length || 0,
     checkCount: report.checks?.length || 0, classCount: report.classes?.length || 0,
     findings: (report.findings || []).slice(0, 8).map(f => ({ id: clip(f.id, 64), file: clip(f.file, 200), line: f.line, message: clip(f.message, 300) })),
     errors: (report.errors || []).slice(0, 4).map(e => ({ id: clip(e.id, 64), file: clip(e.file, 200), message: clip(e.message, 300) })),
     checks: (report.checks || []).slice(0, 8).map(c => ({ id: clip(c.id, 80), status: c.status, exitCode: c.exitCode, durationMs: c.durationMs })),
-    evidence: '.scar/report.json; use scar_details for bounded evidence pages.'
+    evidence: `${report.evidence || '.scar/report.json'}; use scar_details for bounded evidence pages.`
   };
   while (JSON.stringify(result).length > 6000) {
     const field = ['findings', 'errors', 'checks'].sort((a, b) => JSON.stringify(result[b]).length - JSON.stringify(result[a]).length)[0];

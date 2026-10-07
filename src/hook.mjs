@@ -9,12 +9,13 @@ async function main() {
   }
   clearTimeout(inputTimer);
   const input = JSON.parse(text);
-  const { hookEvent, hookFailure, hookBudgets } = await import('./hooks.mjs');
+  const { hookEvent, hookFailure, hookBudget } = await import('./hooks.mjs');
   if (process.argv.includes('--worker')) return await hookEvent(input);
   const name = input?.payload ? input.name : input?.hook_event_name;
   // Parent does not read the workspace. The worker and all its descendants are
   // killed on deadline, including SSH and stalled OS requests.
-  const result = await runCheck({ id: 'hook_worker', command: '$NODE', args: [process.argv[1], '--worker'], timeoutMs: (hookBudgets[name] || 1000) + 1000 }, process.cwd(), JSON.stringify(input));
+  const cwd = input?.payload ? input.payload.cwd : input?.cwd;
+  const result = await runCheck({ id: 'hook_worker', command: '$NODE', args: [process.argv[1], '--worker'], timeoutMs: (hookBudget(name, cwd) || 1000) + 1000 }, process.cwd(), JSON.stringify(input));
   if (result.status !== 'PASS') return hookFailure({ ...input, hook_event_name: name }, new Error(`hook worker ${result.status}`));
   return JSON.parse(result.stdout);
 }

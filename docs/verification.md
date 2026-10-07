@@ -1,5 +1,20 @@
 # Scar 0.1.0 verification
 
+## Concurrent-chat isolation revision
+
+- Windows: 21 unit and 82 feature tests, with bundled build verification. Seven initial isolation tests first reproduced cross-chat overwrite, wrong-host Stop and missing-evidence bypass; real bundled MCP/CLI scope tests also failed before rebuilding the implementation. A further RED test reproduced completed-worktree removal incorrectly blocking the chat.
+- Fifteen new tests cross filesystem, stdio MCP, CLI and native hook boundaries: same-project success/failure isolation, legacy coexistence, multiple workspaces, missing/changed contracts, catalog/source freshness, session restart, scoped scanner coverage, completed-worktree removal and two generation races. Windows case aliases canonicalize; pooled transport calls use explicit host identity.
+- Shared detector source and fixtures remain external to worktrees. A real learned detector still catches its class in another workspace after the first workspace is removed. SessionEnd retains durable ownership; deleting unfinished evidence blocks Stop.
+- Compatibility remains explicit: older unscoped callers share project state. Existing pooled connections must reload or use the same bundled CLI to pass native session scope. Runtime installation and GitHub publication require separate read-back evidence.
+
+## Exact exceptions and UNC freshness revision
+
+- Windows source suites: 21 unit and 67 feature tests pass; refreshed bundles build successfully. New policy tests first demonstrated unapproved fallback failure and older-policy READY surviving, then passed with exact approvals and policy-version freshness.
+- Sixteen filesystem/Workflow exception tests cover strict metadata, optional fallback, new findings, stale or unused approvals, duplicate entries, minified same-line catches, parser errors and unrelated native/learned guards. Approvals remain in the report and do not waive coverage errors.
+- Fresh snapshots bound concurrency to 16 tasks, deterministically hash raw bytes, and detect same-size/same-mtime changes. Cancellation stops scheduling further reads. The observed 1,986-file UNC snapshot fell from 24.27 seconds to 8.61 seconds.
+- Local Stop retains its 2-second work budget; UNC Stop has a finite 15-second allowance with the same native supervision. A real Windows subprocess test crosses the former 3-second parent deadline, establishes fresh evidence and proves project checks are not rerun. Stalled worker and transport cleanup tests remain passing.
+- This revision is built in the source checkout. Installation, activation and production rollout are separate operations; test results do not assert them.
+
 ## Windows command-evidence revision, 2026-10-06
 
 - A post-restart log inspection invalidated an earlier installed-MCP READY claim: npm's PowerShell shim emitted launcher errors and returned zero without running the intended tests. The directly executed 59-test hook revision evidence remains valid; that MCP npm report does not.

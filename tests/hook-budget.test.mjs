@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFile, readFile, access, rm } from 'node:fs/promises';
+import { writeFile, readFile, access, rm, utimes, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { Workflow } from '../src/workflow.mjs';
@@ -13,8 +13,18 @@ import { runCheck } from '../src/process.mjs';
 import fs from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import { projectGateFile } from '../src/io.mjs';
+import * as hooks from '../src/hooks.mjs';
 
 const check = { id: 'behavior', command: '$NODE', args: ['-e', 'process.exit(0)'] };
+
+test('Stop has a finite UNC allowance while local and startup budgets stay short', () => {
+  assert.equal(typeof hooks.hookBudget, 'function');
+  assert.equal(hooks.hookBudget('Stop', '\\\\wsl.localhost\\Ubuntu\\home\\app'), 15000);
+  assert.equal(hooks.hookBudget('Stop', '\\\\fileserver\\projects\\app'), 15000);
+  assert.equal(hooks.hookBudget('Stop', 'C:\\project'), 2000);
+  assert.equal(hooks.hookBudget('Stop', '/home/app'), 2000);
+  assert.equal(hooks.hookBudget('SessionStart', '\\\\fileserver\\projects\\app'), 1000);
+});
 
 test('startup and session-end hooks never snapshot or fetch the catalog', async t => {
   const home = await fixture(t, { 'connection.json': '{"type":"unsupported"}' });
@@ -190,6 +200,43 @@ test('native parent kills a stalled worker and returns INCOMPLETE within its bud
   assert.throws(() => process.kill(pid, 0), { code: 'ESRCH' });
 });
 
+test('native UNC Stop permits fresh work beyond local deadline without rerunning commands', async t => {
+  if (process.platform !== 'win32') { t.skip('Windows UNC path contract'); return; }
+  const home = await fixture(t), project = await fixture(t, { 'main.ts': 'export const value=1;' });
+  const flow = new Workflow(home), count = path.join(home, 'count');
+  await flow.prepare(project, { task: 'Network share freshness', checks: [{ ...check, args: ['-e', `require('fs').appendFileSync(${JSON.stringify(count)},'x')`] }] });
+  await flow.review(project, 'Reviewed network-share source and finite native supervision.');
+  assert.equal((await flow.finish(project)).status, 'READY');
+  const alias = '\\\\scar-test-share\\project', preload = path.join(home, 'network.mjs');
+  await writeFile(preload, `import fs from 'node:fs/promises'; import {syncBuiltinESMExports} from 'node:module';
+    if(process.argv.includes('--worker')) {
+      const alias=${JSON.stringify(alias)}, root=${JSON.stringify(project)};
+      for(const key of ['realpath','readFile','stat']) {
+        const original=fs[key];
+        fs[key]=async(file,...args)=>{
+          const mapped=String(file).startsWith(alias)?root+String(file).slice(alias.length):file;
+          if(key==='realpath' && String(file).startsWith(alias)) await new Promise(resolve=>setTimeout(resolve,1700));
+          return await original(mapped,...args);
+        };
+      }
+      syncBuiltinESMExports();
+    }`);
+  const invoke = event => new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.resolve('src/hook.mjs')], { env: { ...process.env, SCAR_HOME: home, NODE_OPTIONS: `--import=${pathToFileURL(preload).href}` }, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    const timer = setTimeout(() => { child.kill(); reject(new Error('UNC supervisor did not exit')); }, 17000);
+    let output = '';
+    child.stdout.setEncoding('utf8'); child.stdout.on('data', text => output += text);
+    child.on('error', reject);
+    child.on('close', code => { clearTimeout(timer); code === 0 ? resolve(JSON.parse(output)) : reject(new Error(`Native hook exit ${code}`)); });
+    child.stdin.end(JSON.stringify({ cwd: alias, session_id: 'unc-budget', hook_event_name: event }));
+  });
+  assert.ok((await invoke('SessionStart')).hookSpecificOutput);
+  const started = performance.now();
+  assert.deepEqual(await invoke('Stop'), {});
+  assert.ok(performance.now() - started > 3000, 'Fixture did not cross the old parent deadline');
+  assert.equal(await readFile(count, 'utf8'), 'x');
+});
+
 test('cancellation kills a real transport subprocess', async t => {
   const home = await fixture(t);
   const pidFile = path.join(home, 'transport.pid');
@@ -257,6 +304,37 @@ test('oversized source is rejected by metadata before reading any content', asyn
   } });
   assert.equal(reads, 0);
   assert.match(state.errors[0].message, /10 MiB/);
+});
+
+test('fresh snapshot bounds concurrent reads and deterministically hashes same-size same-time edits', async t => {
+  const project = await fixture(t, Object.fromEntries(Array.from({ length: 48 }, (_, i) => [`source/${i}.ts`, 'export const value=1;'])));
+  let active = 0, peak = 0;
+  const delayed = { readFile: async (...args) => {
+    active++; peak = Math.max(peak, active);
+    try { await new Promise(resolve => setTimeout(resolve, 5)); return await readFile(...args); }
+    finally { active--; }
+  } };
+  const before = await snapshot(project, { fs: delayed });
+  assert.ok(peak > 1, 'Source reads still run one at a time');
+  assert.ok(peak <= 16, 'Filesystem concurrency is unbounded');
+  assert.equal(active, 0);
+  assert.equal((await snapshot(project)).fingerprint, before.fingerprint);
+  const target = path.join(project, 'source/0.ts'), info = await stat(target);
+  await writeFile(target, 'export const value=2;');
+  await utimes(target, info.atime, info.mtime);
+  assert.equal((await stat(target)).size, info.size);
+  assert.notEqual((await snapshot(project)).fingerprint, before.fingerprint);
+});
+
+test('cancelled concurrent snapshot stops scheduling fresh IO', async t => {
+  const project = await fixture(t, Object.fromEntries(Array.from({ length: 48 }, (_, i) => [`${i}.ts`, 'export const value=1;'])));
+  const controller = new AbortController();
+  let reads = 0;
+  await assert.rejects(() => snapshot(project, { signal: controller.signal, fs: {
+    readFile: async (...args) => { reads++; controller.abort(new Error('test deadline')); return await readFile(...args); }
+  } }), /test deadline/);
+  await new Promise(resolve => setTimeout(resolve, 30));
+  assert.ok(reads <= 16, 'Cancellation scheduled further source reads');
 });
 
 test('real native hook starts on unavailable workspace and exits without detached work', async t => {

@@ -33,9 +33,11 @@ Tell the agent what to build. Scar complements your existing SDD and TDD instruc
 
 Startup hooks read only small Scar state files and cached prevention hints. They do not traverse source, parse code, run checks or contact a remote catalog. `scar_prepare` refreshes hints and arms the software completion gate; every preparation creates a new task generation. After successful Stop, the gate closes so ordinary conversations do not rerun it. **Zero-scan hooks cannot discover software edits when an agent skips preparation.** The skill requires preparation for every software task. Deleting workspace evidence does not clear an armed gate.
 
-Hooks have internal work budgets of 1 second for startup/prompt, 2 seconds for Stop, and 0.5 seconds for SessionEnd. A native supervisor allows a further second to terminate the worker and descendants. These are upper work budgets, not promised execution times. If fresh evidence cannot be established within the budget, Stop reports INCOMPLETE; it never accepts a cached READY without validation or starts a background verification job. See [hook design](docs/hook-latency.md).
+Hooks have internal work budgets of 1 second for startup/prompt, 2 seconds for local Stop (15 seconds for UNC shares, including WSL), and 0.5 seconds for SessionEnd. A native supervisor allows a further second to terminate the worker and descendants. Fresh byte reads use at most 16 concurrent filesystem operations; no size/mtime freshness cache is used. These are upper work budgets, not promised execution times. If fresh evidence cannot be established within the budget, Stop reports INCOMPLETE; it never accepts a cached READY without validation or starts a background verification job. See [hook design](docs/hook-latency.md).
 
 An expanded class retains its ID, old extension scope and historical fixture coverage. The personal catalog lives outside the installation at `<user-home>/.scar/catalog.json`, survives plugin upgrades and applies across projects. Project `.scar/` contains generated contracts and complete reports. Neither belongs in the public plugin repository.
+
+Concurrent chats use explicit native `sessionId` and `hostProject` arguments, supplied by hook context. Each chat keeps separate contracts/reports and can verify worktrees outside its original cwd; Stop checks every active workspace bound to that chat. Legacy unscoped tools retain shared project behavior. Learned detector programs and fixtures stay in the single personal catalog when a worktree is removed. See [session isolation](docs/session-isolation.md). An already-running MCP connection may need a host reload to expose the new arguments; the agent can use the same bundled CLI in the meantime.
 
 ## Catalog size and model cost
 
@@ -46,6 +48,8 @@ Tool verification responses contain bounded summaries and full counts. `scar_det
 ## Current coverage
 
 Built-in AST guards detect empty catch blocks, async `forEach` callbacks and async Promise executors in JS/TS/JSX/TSX and Vue script blocks. JavaScript grammar is validated separately from TypeScript; Vue external scripts and unsupported encodings report coverage gaps.
+
+An intentional optional fallback can use an [exact documented SCAR-001 exception](docs/project-exceptions.md), bound to its rule, file, catch line and whole-file SHA-256. Approvals remain auditable in the report; stale or invalid approvals fail coverage. Parser errors and other guards cannot be waived.
 
 Existing npm test/typecheck/lint/build scripts, Go, Cargo and pytest checks are discoverable. Other tools and language-specific protection are added by the agent through executable project checks and proven personal detectors. An empty suite is incomplete. `READY` means the declared checks passed against fresh source, contract and catalog; it does not prove every possible bug is absent. Custom detector programs are trusted code with time/output limits, not a security sandbox.
 

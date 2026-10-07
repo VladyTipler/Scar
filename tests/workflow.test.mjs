@@ -7,6 +7,8 @@ import path from 'node:path';
 import { Workflow } from '../src/workflow.mjs';
 import { Catalog } from '../src/catalog.mjs';
 import { fixture, candidate } from './helpers.mjs';
+import { snapshot, builtins } from '../src/workspace-state.mjs';
+import { digest } from '../src/io.mjs';
 const exec = promisify(execFile);
 const cli = path.resolve('src/cli.mjs');
 const check = { id: 'behavior', command: '$NODE', args: ['check.mjs'] };
@@ -66,5 +68,18 @@ test('catalog update and contract tampering invalidate existing verification', a
   const contract = JSON.parse(await readFile(contractPath));
   contract.task = 'Changed';
   await writeFile(contractPath, JSON.stringify(contract));
+  assert.equal((await flow.status(root)).status, 'STALE');
+});
+
+test('earlier scanner-policy READY cannot survive an engine policy revision', async t => {
+  const root = await fixture(t, { 'main.ts': 'export const value=1;', 'check.mjs': 'process.exit(0)' });
+  const home = await fixture(t), flow = new Workflow(home);
+  await flow.prepare(root, { task: 'Fresh native scanner policy', checks: [check] });
+  await flow.review(root, 'Reviewed current native policy and fresh executable checks.');
+  assert.equal((await flow.finish(root)).status, 'READY');
+  const files = flow.files(root), report = JSON.parse(await readFile(files.report)), review = JSON.parse(await readFile(files.review));
+  const oldBinding = digest({ source: (await snapshot(root)).fingerprint, contract: JSON.parse(await readFile(files.contract)), catalog: digest({ version: 2, builtins, revision: (await flow.catalog.read()).revision }) });
+  await writeFile(files.report, JSON.stringify({ ...report, binding: oldBinding }));
+  await writeFile(files.review, JSON.stringify({ ...review, binding: oldBinding }));
   assert.equal((await flow.status(root)).status, 'STALE');
 });

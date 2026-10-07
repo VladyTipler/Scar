@@ -25,5 +25,10 @@
 - [x] Install command-evidence revision and verify a fresh MCP process with actual npm output.
 - [x] Reload the desktop MCP once more to activate the command-evidence revision in its existing connection.
 - [ ] Clean and verify all temporary resources (local removal blocked by automatic approval review).
+- [x] Exact documented SCAR-001 project exceptions: full-byte hashes, strict metadata, stale/unused rejection and auditable approvals.
+- [x] Bounded concurrent fresh snapshots and finite UNC Stop allowance; native supervision and same-size/same-time regressions.
 
 Activation remains separate: Codex requires one-time trust of the reviewed hooks; Nexus requires provider wiring and an authorized rollout. Neither is implied by package discovery or passing adapter tests.
+
+- [x] Isolate per-chat task contracts, reports and gates; retain shared catalog and legacy compatibility.
+- [ ] Prove real MCP/native hook multi-worktree and concurrency boundaries; publish GitHub and verify installed bundles.
