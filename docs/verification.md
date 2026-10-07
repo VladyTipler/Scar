@@ -1,13 +1,14 @@
 # Scar verification
 
-## ZCode compatibility revision 0.1.1, 2026-10-07
+## ZCode manifest revision 0.1.1, 2026-10-07
 
-- macOS arm64, Node 22.18.0: `npm ci`, `npm run build`, `npm test` and `npm run test:feature`. Unit checks: 21 pass. Feature/integration checks: 44 pass, seven Windows-specific tests skipped, zero failures.
-- Five ZCode regressions cover current-session-only cleanup after prose/READY Stop, stale evidence rejection, repair-budget retention, the armed gate, repeated allowed Stop, next-prompt recreation and unchanged native SessionEnd behavior. Real declared commands and a real stdio MCP client run copied bundles from a path containing spaces without `node_modules`; all ten tools are discovered, missing execution blocks, fresh finish allows cleanup, and a new task blocks again.
-- ZCode 0.16.9's bundled `plugins validate` accepts the native manifest. Installed-host source confirms `.zcode-plugin` precedence, plugin-root expansion, the three declared events and retained `cwd`/`session_id` in hook stdin. Its actual extracted hook-output processor was exercised with startup context, neutral `{}` success, blocking retry, and terminal INCOMPLETE context.
-- ZCode ignores top-level Stop `continue:false` and does not inject `systemMessage` without a blocking decision. `--zcode` therefore also copies terminal INCOMPLETE guidance into `hookSpecificOutput.additionalContext`, without requesting another repair turn. The project gate and repair state remain armed; this is not READY.
-- Source-level and isolated subprocess proof is not a live Desktop task or a host UI warning-display test. The existing installed copy is not updated by these source changes. Windows/Linux and native Codex/Claude hosts were not rerun for this revision; prior evidence below is historical, not renewed certification.
-- Abandoned ZCode sessions may retain a small bookkeeping file. Only an allowed Stop removes its own record. There is no sweep, background job, catalog deletion or pending-gate bypass.
+- The final revision preserves the author's four events and original engine/output behavior. The initial three-hook adapter and Stop-based cleanup were withdrawn. The ZCode manifest now reuses `hooks/native.json`; no host-specific runtime flag or cleanup behavior remains.
+- macOS arm64, Node 22.18.0: `npm run build`, `npm test` and `npm run test:feature`. Unit checks: 21 pass. Feature/integration checks: 41 pass, seven Windows-specific tests skipped, zero failures.
+- Two packaging regressions enforce the four-hook declaration and exercise real declared commands plus a real stdio MCP client with copied bundles in a path containing spaces, without `node_modules`. They prove that prose/READY Stop retains bookkeeping, only SessionEnd removes it, SessionEnd does not clear an unfinished project gate, and subsequent tasks retain the normal repair budget.
+- Direct SessionEnd execution in these tests is a plugin subprocess boundary, not evidence that ZCode emits the event. ZCode 0.16.9 does not recognize or emit SessionEnd. Its Stop handler also does not inject Scar's terminal non-blocking `systemMessage` as context. Full host compatibility remains pending changes to ZCode, not workarounds in Scar.
+- Installed-host source confirms `.zcode-plugin` precedence, plugin-root expansion and retained `cwd`/`session_id` in hook stdin. Manifest validation alone is insufficient to prove lifecycle support.
+- No live Desktop task or host UI warning-display test was performed. The existing installed copy is unchanged. Windows/Linux and native Codex/Claude hosts were not rerun for this revision; prior evidence below is historical.
+- Session records can remain on hosts that omit SessionEnd. There is no sweep, background job, catalog deletion or pending-gate bypass.
 
 ## Windows command-evidence revision, 2026-10-06
 
@@ -41,7 +42,7 @@ Validated 2026-10-05. Windows Node 24.13.1; Linux Node 22.22.3; Codex CLI 0.156.
 
 READY covers declared detector shapes plus selected project behavior/integration checks, fresh source/contract/catalog and learning review. Source, contract or catalog changes revoke prior evidence. Failures, missing checks and unverified encodings cannot become READY.
 
-No measured production bug-reduction claim yet. Evaluate actual feature work by caught-before-completion classes, escaped bugs, useful new protections and runtime/context overhead. The 0.1.1 revision has macOS subprocess/SDK evidence and ZCode manifest/output-processor checks, but no live ZCode Desktop task proof. Claude compatibility metadata is present; this release does not claim an actual Claude host run.
+No measured production bug-reduction claim yet. Evaluate actual feature work by caught-before-completion classes, escaped bugs, useful new protections and runtime/context overhead. The 0.1.1 revision has macOS subprocess/SDK evidence, but no live ZCode Desktop task proof or complete four-hook host compatibility. Claude compatibility metadata is present; this release does not claim an actual Claude host run.
 
 The Nexus bridge has real MCP and host-process boundary proof, including explicit workspace/session and refusal of `continue:false`. Provider wiring and production activation remain a separate host integration; Nexus source, main and deployment were not changed. Installing native Codex hooks into today's isolated Nexus runner will not enforce completion.
 
