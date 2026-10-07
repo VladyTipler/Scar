@@ -31,4 +31,4 @@
 Activation remains separate: Codex requires one-time trust of the reviewed hooks; Nexus requires provider wiring and an authorized rollout. Neither is implied by package discovery or passing adapter tests.
 
 - [x] Isolate per-chat task contracts, reports and gates; retain shared catalog and legacy compatibility.
-- [ ] Prove real MCP/native hook multi-worktree and concurrency boundaries; publish GitHub and verify installed bundles.
+- [x] Prove real MCP/native hook multi-worktree and concurrency boundaries; publish GitHub and verify installed bundles.

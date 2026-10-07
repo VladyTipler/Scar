@@ -2,10 +2,11 @@
 
 ## Concurrent-chat isolation revision
 
-- Windows: 21 unit and 82 feature tests, with bundled build verification. Seven initial isolation tests first reproduced cross-chat overwrite, wrong-host Stop and missing-evidence bypass; real bundled MCP/CLI scope tests also failed before rebuilding the implementation. A further RED test reproduced completed-worktree removal incorrectly blocking the chat.
+- Windows: 21 unit and 82 feature tests pass, with successful bundled build. Seven initial isolation tests first reproduced cross-chat overwrite, wrong-host Stop and missing-evidence bypass; real bundled MCP/CLI scope tests also failed before rebuilding the implementation. A further RED test reproduced completed-worktree removal incorrectly blocking the chat.
 - Fifteen new tests cross filesystem, stdio MCP, CLI and native hook boundaries: same-project success/failure isolation, legacy coexistence, multiple workspaces, missing/changed contracts, catalog/source freshness, session restart, scoped scanner coverage, completed-worktree removal and two generation races. Windows case aliases canonicalize; pooled transport calls use explicit host identity.
 - Shared detector source and fixtures remain external to worktrees. A real learned detector still catches its class in another workspace after the first workspace is removed. SessionEnd retains durable ownership; deleting unfinished evidence blocks Stop.
-- Compatibility remains explicit: older unscoped callers share project state. Existing pooled connections must reload or use the same bundled CLI to pass native session scope. Runtime installation and GitHub publication require separate read-back evidence.
+- Installed runtime file hashes match the rebuilt source bundles; a fresh installed stdio MCP verifies, reviews and finishes the actual implementation tree to READY with all three project commands and six applicable classes. The native chat binding targets that tree while its unrelated legacy host contract remains untouched. The source revision is published to GitHub main; personal catalog/reports stay private. The previous installed runtime is retained for rollback.
+- Compatibility remains explicit: older unscoped callers share project state. Existing pooled connections must reload or use the same bundled CLI to pass native session scope. Native hooks launch the current bundle on their next lifecycle event. These results do not assert macOS execution, Nexus deployment or a restarted desktop MCP pool.
 
 ## Exact exceptions and UNC freshness revision
 
