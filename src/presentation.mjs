@@ -45,17 +45,19 @@ export function publicationResult(catalog, id) {
 }
 export function compactReport(report) {
   const result = {
-    status: report.status, binding: report.binding, reason: clip(report.reason, 500),
+    status: clip(report.status, 32), binding: clip(report.binding, 128), reason: clip(report.reason, 500),
+    ...(report.scope ? { scope: { kind: report.scope.kind, paths: report.scope.paths.slice(0, 8).map(p => clip(p, 160)), pathCount: report.scope.paths.length }, coverage: clip(report.coverage, 500), warningCount: report.warnings?.length || 0, warnings: (report.warnings || []).slice(0, 8).map(f => ({ id: clip(f.id, 64), file: clip(f.file, 200), line: f.line, message: clip(f.message, 300) })) } : {}),
     findingCount: report.findings?.length || 0, errorCount: report.errors?.length || 0,
     acceptedExceptionCount: report.acceptedExceptions?.length || 0,
     checkCount: report.checks?.length || 0, classCount: report.classes?.length || 0,
     findings: (report.findings || []).slice(0, 8).map(f => ({ id: clip(f.id, 64), file: clip(f.file, 200), line: f.line, message: clip(f.message, 300) })),
     errors: (report.errors || []).slice(0, 4).map(e => ({ id: clip(e.id, 64), file: clip(e.file, 200), message: clip(e.message, 300) })),
-    checks: (report.checks || []).slice(0, 8).map(c => ({ id: clip(c.id, 80), status: c.status, exitCode: c.exitCode, durationMs: c.durationMs })),
-    evidence: `${report.evidence || '.scar/report.json'}; use scar_details for bounded evidence pages.`
+    checks: (report.checks || []).slice(0, 8).map(c => ({ id: clip(c.id, 80), status: clip(c.status, 32), exitCode: c.exitCode, durationMs: c.durationMs })),
+    evidence: `${clip(report.evidence || '.scar/report.json', 500)}; use scar_details for bounded evidence pages.`
   };
   while (JSON.stringify(result).length > 6000) {
-    const field = ['findings', 'errors', 'checks'].sort((a, b) => JSON.stringify(result[b]).length - JSON.stringify(result[a]).length)[0];
+    const field = ['findings', 'errors', 'checks', ...(result.warnings ? ['warnings'] : [])].filter(key => result[key].length).sort((a, b) => JSON.stringify(result[b]).length - JSON.stringify(result[a]).length)[0];
+    if (!field) break;
     result[field].pop();
   }
   return result;
@@ -75,7 +77,7 @@ export async function reportDetails(flow, project, options = {}) {
   const report = await readJson(flow.files(project).report, null);
   if (!report) throw new Error('Verification report not found.');
   const section = options.section || 'findings';
-  if (!['findings', 'errors', 'checks', 'classes'].includes(section)) throw new Error('Invalid report section.');
+  if (!['findings', 'warnings', 'errors', 'checks', 'classes'].includes(section)) throw new Error('Invalid report section.');
   if (options.checkId) {
     const check = report.checks.find(c => c.id === options.checkId);
     if (!check) throw new Error('Check not found.');

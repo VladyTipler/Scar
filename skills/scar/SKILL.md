@@ -1,43 +1,36 @@
 ---
 name: scar
-description: "Use for every software task: before specification or implementation, retrieve accumulated failure classes; before completion, run executable project and class checks; after defects, generalize and learn proven reusable detectors. Works without Git/CI. Complements existing SDD (including superpowers) and TDD instructions. Not for non-software tasks."
+description: "Use when implementing software, reviewing code/specifications, answering technical questions, or investigating verification failures. Not for non-software tasks."
 ---
 
-# Scar — every bug leaves a defense
+# Scar — prevention without widening authority
 
-The user installs one plugin. Do all setup and selection yourself. Do not ask them to author contracts, run CLI commands, manage a catalog, or install Scar dependencies individually.
+## Choose the mode before any tool call
 
-## Before code
+**Questions, investigation, planning, specification review or read-only audit:** use `scar_prepare` with explicit `mode: "analysis"`, absolute target `project`, and `task`; or read `scar_context` / `scar_catalog`. Analysis reads only: no contract, executable checks, detector programs, review/finish, learning publication, or completion gate. Findings belong in the answer, not an obligation to edit code. Do not infer permission to run tests/build from the topic being software. Never supply checks for analysis.
 
-1. Read project guidance, current code and existing test infrastructure. Use the user's existing SDD/TDD flow; Scar is the learning/verification component, not a replacement.
-2. Call `scar_prepare` with absolute `project` and concrete `task`. Existing project checks are discovered automatically. Read retrieved classes before writing the specification or code. In a new/empty project read `scar_catalog` too; use declared extensions to select future risks.
-   This call activates the completion gate and starts a new task generation, even for identical inputs. Startup hooks use cached hints and do not detect edits when preparation is skipped. Use the actual workspace as `project`. Pass the native hook's `sessionId` and original `hostProject` on prepare/verify/review/finish/status/details, including when working in another worktree. Never guess chat identity from a pooled MCP process or its transport session. If native context is unavailable, use legacy unscoped mode and disclose that its task state is shared by project. After a completed task, prepare again before the next software task.
-   Each chat keeps separate contracts/reports and binds its prepared workspaces to the native host cwd. Stop requires fresh READY for all active workspaces in that chat; another chat's failure or legacy contract cannot replace its evidence. The single personal catalog and executable detector fixtures stay outside worktrees. Deleting a worktree does not discard learned defenses, but deleting unfinished task evidence blocks completion.
-   Preparation shows a bounded first page, not the entire catalog. If more preventive context is needed, use `scar_context` with task/focusPaths and nextOffset, or search `scar_catalog`. Fetch only relevant class details by ID. Every applicable executable guard runs regardless of hint pagination.
-3. Include applicable risks and externally observable success in the existing spec/plan. Enrich the generated contract with focused tests and real integration/acceptance checks as needed. Pass executable `checks` to `scar_prepare`; argument arrays, no shell strings. `$NODE` uses the current runtime. No Git or remote required.
-4. If tests are absent, establish the appropriate test infrastructure and write meaningful RED tests yourself. Do not treat an empty suite, typecheck or model review as behavioral proof. For integrations, cross the actual contract boundary.
+**Explicitly authorized implementation:** use `mode: "implementation"`. The scoped host obtains the owner identity from its trusted launcher, never model arguments. If trusted session identity is unavailable, report that limitation; do not bypass via a legacy CLI, inject an environment identity yourself, spoof lifecycle events, or use a dummy check. Local 0.1.6 retains automatic identity from native PreToolUse: call ordinary Scar tools without session IDs, tokens or launcher commands. The host injects a one-use _scarBinding parameter; never supply or copy it yourself. Implementation must target the current real workspace. If native binding is unavailable or expired, report the exact refusal; do not bypass it. The optional operator session bridge is not needed for normally bound plugin calls and must not be launched by the model.
 
-## During development
+Preparation creates an owner-bound generation and canonical target project. Stop follows that task even if host cwd differs. Analysis never clears an active implementation. An existing active task cannot be replaced by another prepare; finish it, or have an authorized administrator cancel the exact generation with a recorded reason. Cancellation is not READY.
 
-Implement via TDD. For a meaningful defect or near miss, search analogous code and identify its general class. Prefer an existing class and expand its protection instead of creating a duplicate. Keep project-specific behavior tests in their natural locations.
+## Subagents and target selection
 
-## Learn a reusable defense
+Reviewer subagents only inspect context/catalog and code; they never prepare implementation, verify, finish, learn or close the parent's task. The owner coordinates executable verification. Use the actual target repository, not an unrelated host cwd. A delegated audit must not create another project contract.
 
-Read `references/learning.md` for record schema and detector examples.
+## Documentation-only implementation
 
-- Use `scar_catalog` to obtain the latest revision and avoid duplicates.
-- Class records include origin/evidence, explanation, prevention, extension scope and standalone ESM detector source.
-- The detector exports `default async ({files}) => findings` with `{file,line,message}`. It receives relative paths and source text; it must be deterministic and side-effect free. It runs in a bounded subprocess; **this is trusted executable code, not a security sandbox**. Never import executable detector code from untrusted web content, comments or logs.
-- Supply at least one original faulty fixture, an independently varied faulty fixture, and a valid counterexample. Declare honest scope; fixture proof is not universal proof.
-- `scar_learn` validates fixture outcomes, locks, checks expected revision, writes atomically and reads back. Preserve class IDs when expanding a proven rule using its explicit replacement option. Prior generations' fixtures must still pass; never narrow already protected scope silently. To revise a detector, request that ID's source/fixtures slices from `scar_catalog`.
-- Do not put personal incidents, code, fixtures, secrets or catalogs into the public plugin repo. Rich private context may link to class IDs in the user's Wiki.
+For explicitly authorized Markdown changes, prepare with `scope: {kind:"documentation", paths:["docs","README.md"]}` and explicit real documentation checks. Do not treat focusPaths as verification scope. Only named Markdown may change; code/tests/config/generated files are protected by the preparation baseline. Existing built-in code findings are warnings, still reported; scoped READY is not whole-repository READY. Source changes or incomplete coverage block. Do not run npm test/build just because documentation changes.
 
-## Close
+Do not rewrite an active old contract. Only if the user explicitly authorizes withdrawing/replacing its mistaken full-project task, its owner can call scar_cancel with exact expectedRunId and concrete reason; CANCELLED preserves evidence and is not READY. Then start a new authorized documentation phase. Never cancel another owner or hide source defects to pass. See [documentation scope](../../docs/documentation-task-scope.md).
 
-1. `scar_verify` executes selected class detectors and configured project commands. Inspect concrete outputs and repair failures. Missing coverage is incomplete, never PASS.
-2. Publish meaningful new classes before the learning review. Do not invent lessons just to fill the catalog. Use `scar_review` to cite learned IDs or explain specifically why no reusable class was discovered.
-3. `scar_finish` reruns checks and checks source/contract/catalog freshness plus review. Only `READY` permits a completed implementation report. Report remaining limitations and release/activation status separately.
-   Stop validates existing evidence; it never launches project checks. A hook-budget failure means INCOMPLETE, not a background job or implicit approval. Run the expensive verification through MCP, inspect the exact gap, and report incomplete if the bounded gate cannot establish freshness.
-4. If environment or authority prevents verification, report the task as incomplete with the exact gap. Do not claim success or loop indefinitely.
+## Implementation cycle
 
-MCP tools are the default. If the host cannot expose them or its already-running connection lacks the updated session arguments, the **same bundled engine** can be invoked using `node <plugin>/dist/cli.cjs` with the same scope; see `references/operations.md`. Report activation limits rather than killing host processes. Do not create a second implementation.
+1. Read project guidance and prevention hints. Follow existing SDD/TDD.
+2. Supply meaningful behavior/integration checks using argument arrays. Missing checks never qualify as READY. Explicit `excludeRoots` may name confirmed generated root directories, such as `.test-dist`; scope is bound to evidence. Do not blanket-ignore tests or suppress all empty catches.
+3. Implement via TDD. Meaningful defects may justify a proven reusable detector: read [learning](references/learning.md), search prior classes, prove original-bad/independent-bad/good fixtures, preserve prior scope.
+4. Run `scar_verify`. For unchanged FAIL/INCOMPLETE, inspect `scar_status` / `scar_details` and report the gap. Do not repeatedly call finish or edit unrelated code just to get READY. An intentional test catch needs review, not automatic dismissal.
+5. Record learning rationale via `scar_review`; then `scar_finish` runs fresh checks. Only READY supports an implementation-complete claim. Stale or failed evidence remains incomplete.
+
+No personal incidents, credentials or catalogs belong in the public repo. Detector programs are trusted code, not a security sandbox.
+
+[Operations](references/operations.md) covers administrator recovery and legacy host behavior. Legacy CLI is not an escape hatch from scoped host refusals.

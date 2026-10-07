@@ -1,6 +1,18 @@
 # Operations
 
-Normal use is via the agent and MCP. CLI is for diagnostics and hosts without MCP, not a second tool the user must install.
+Normal use is via the agent and MCP. Analysis is explicitly read-only: `scar_prepare({project, task, mode:"analysis"})` returns ANALYSIS and creates no project/catalog state or gate. It never configures or runs checks. The scoped ZCode MCP defaults to analysis and rejects implementation without trusted launcher `SCAR_HOST_SESSION_ID`; do not put a model-chosen ID into tool arguments or environment. ZCode 0.16.9 cannot expand session identity in static MCP templates, but local 0.1.4 uses [native PreToolUse binding](../../../docs/zcode-native-binding.md) automatically. The host injects a one-use _scarBinding field bound to its actual session, operation, exact arguments and workspace; MCP atomically consumes it per call. Models must not supply this field or a session ID. Analysis issues no token. Expired/missing/replayed binding refuses before mutation. The optional operator-owned [session bridge](../../../docs/zcode-session-bridge.md) remains separate and is not needed per normally bound task. No catalog/learning write is allowed without an active owner task.
+
+`mode:"implementation"` under a session-bound launcher owns a canonical target/generation. Other sessions and reviewer subagents cannot mutate it; Stop follows its pointer rather than cwd. Analysis does not disarm an existing task. Legacy non-scoped Codex/CLI behavior remains for compatibility; it must not be used to bypass a scoped refusal.
+
+Local 0.1.5 adds [explicit documentation task scope](../../../docs/documentation-task-scope.md): scope.kind=documentation with safe paths, explicit checks, protected-file baseline before/after checks and fresh Stop, source findings in warnings. Scoped READY is documentation-only, not repository certification. focusPaths remains hint ranking, not scope.
+
+Scoped native scar_cancel is now available ONLY for explicit owner withdrawal: project, exact expectedRunId and reason; it archives before cancellation, never fabricates READY. No implicit migration. Legacy unowned administrative recovery remains CLI-only:
+
+    node <plugin>/dist/cli.cjs cancel <absolute-project> --run-id <exact-current-runId> --reason "Specific mistaken-task explanation"
+
+This unscoped administrative CLI can cancel only legacy unowned tasks. Owned tasks require their trusted session owner; another session, reviewer or legacy CLI cannot cancel them. Cancellation uses an exact active-generation check and preserves contract, prior gate, report and review in `<catalog-home>/cancellations`. It records CANCELLED, never READY, and keeps project evidence in place. Failed/changed generation or missing archive fails closed. Do not delete gate files to force completion.
+
+CLI is for diagnostics and authorized legacy hosts, not a second tool the user must install.
 
     node <plugin>/dist/cli.cjs prepare <absolute-project> --contract <json-file>
     node <plugin>/dist/cli.cjs verify <absolute-project>
@@ -8,7 +20,7 @@ Normal use is via the agent and MCP. CLI is for diagnostics and hosts without MC
     node <plugin>/dist/cli.cjs finish <absolute-project>
     node <plugin>/dist/cli.cjs learn <absolute-record-file>
 
-Contract input: `{ "task": "Observable outcome", "checks": [{ "id": "behavior", "command": "$NODE", "args": ["--test", "tests/feature.mjs"] }] }`. Omitting checks discovers existing npm scripts, Go, Cargo and pytest configuration; the agent must add any missing feature/integration evidence. Discovery never chooses deploy scripts.
+Contract input: `{ "task": "Observable outcome", "checks": [{ "id": "behavior", "command": "$NODE", "args": ["--test", "tests/feature.mjs"] }] }`. Omitting checks discovers existing npm scripts, Go, Cargo and pytest configuration; the agent must add any missing feature/integration evidence. Discovery never chooses deploy scripts. Scoped implementation can explicitly supply safe root-only `excludeRoots` (e.g. `[".test-dist"]`); those names and excluded scope are included in evidence. A changed scope invalidates old evidence. Nested source directories with the same name remain covered. There is no blanket test exclusion. Unchanged failed scoped evidence must be inspected via status/details; verify/finish rejects a retry until source, contract or catalog changes.
 
 Default personal catalog: `<user-home>/.scar/catalog.json`; it survives uninstall and upgrades. `SCAR_HOME` selects a shared mounted catalog directory. This optional override is for administrators; no project configuration is required. `.scar/contract.json`, `report.json` and `review.json` are generated project evidence. Keep them private unless intentionally reviewed for publication.
 
@@ -18,7 +30,7 @@ Scoped evidence lives in `.scar/sessions/<session-hash>/`; durable ownership in 
 
 Excluded scanner directories: dependency/cache folders, root generated output directories (`dist`, `build`, `coverage`, `.next`, `.nuxt`, `.output`, `target`), root `.worktrees` and `.claude`. Archive files (`.dump`, `.zip`, `.tar`, `.gz`, `.tgz`, `.bz2`, `.xz`, `.7z`, `.rar`) are outside snapshot and detector coverage. Select a nested worktree as its own project to verify it. Nested source directories named build remain scanned. Symlinks and oversized files report coverage errors; size is checked before content is read. Git ignores do not secretly remove source from checks. Generated `.scar/context.json` is excluded, while `.scar/checks` remains source. Native parser results are cached by content, path/grammar and scanner version (256 entries); content hashes and catalog revisions are always read fresh.
 
-Startup/prompt hooks read bounded local session files and cached project hints only. They make no catalog network calls or source scans. Software preparation creates a unique runId and a durable armed gate in `<catalog-home>/projects`; deleting `.scar` does not approve that task. Stop reads fresh verification evidence, with no detector/test execution, and closes the gate only on READY. Prepare each subsequent software task; hooks cannot infer changes without it. SessionEnd only removes the session record and does not clear an unfinished gate.
+Startup/prompt hooks read bounded local session files and cached project hints only. They make no catalog network calls or source scans. Software preparation creates a unique runId and a durable armed gate in `<catalog-home>/projects`; deleting `.scar` does not approve that task. Stop reads fresh verification evidence, with no detector/test execution, and closes the gate only on READY. Prepare each subsequent software task; hooks cannot infer changes without it. SessionEnd only removes the session record and does not clear an unfinished gate. ZCode does not emit SessionEnd: its Stop command opts into `--zcode`, removing only that session's bookkeeping on an allowed Stop. Blocked/incomplete attempts retain their counter and gate; the next prompt/start recreates bookkeeping. Abandoned session records are not swept in the background.
 
 Commands execute in the project, with argument arrays. Failures, timeouts, excessive output, parser errors and source changes prevent verification. Custom detectors receive a source snapshot in a subprocess capped at 10 seconds. Fixtures and detector source are private catalog data.
 

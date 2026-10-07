@@ -6,7 +6,7 @@ const root = path.resolve(import.meta.dirname, '..');
 await mkdir(path.join(root, 'dist'), { recursive: true });
 const checksums = {};
 const packages = new Set();
-for (const name of ['cli', 'hook', 'mcp']) {
+for (const name of ['cli', 'hook', 'mcp', 'zcode-bridge']) {
   const outfile = path.join(root, 'dist', `${name}.cjs`);
   const result = await build({ entryPoints: [path.join(root, 'src', `${name}.mjs`)], outfile, platform: 'node', target: 'node20', bundle: true, format: 'cjs', minify: true, legalComments: 'eof', metafile: true, alias: { '@vue/compiler-sfc': '@vue/compiler-sfc/dist/compiler-sfc.esm-browser.js' } });
   await writeFile(outfile, (await readFile(outfile, 'utf8')).replace(/[ \t]+$/gm, ''));

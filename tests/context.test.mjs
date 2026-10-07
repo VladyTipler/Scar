@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { fixture, candidate } from './helpers.mjs';
 import { atomicJson } from '../src/io.mjs';
@@ -49,6 +50,19 @@ test('failure summaries preserve failure counts and never dump command logs or u
   assert.ok(compact.findings.length <= 8);
   assert.ok(JSON.stringify(compact).length < 6500);
   assert.ok(!JSON.stringify(compact).includes('trace'));
+});
+
+test('oversized scalar metadata cannot hang a compact report with empty evidence arrays', () => {
+  const module = new URL('../src/presentation.mjs', import.meta.url).href;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    import { compactReport } from ${JSON.stringify(module)};
+    const report = compactReport({ status: 'FAIL', binding: 'b'.repeat(12000), evidence: 'e'.repeat(12000), findings: [], errors: [], checks: [], acceptedExceptions: [{ id: 'SCAR-001' }] });
+    process.stdout.write(JSON.stringify(report));
+  `], { encoding: 'utf8', timeout: 1500 });
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0);
+  assert.ok(result.stdout.length <= 6000);
+  assert.equal(JSON.parse(result.stdout).acceptedExceptionCount, 1);
 });
 
 test('context budgets are enforced against metadata and paginated reads are explicit', async t => {
