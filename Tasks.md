@@ -24,6 +24,10 @@
 - [x] Reject unsupported cmd argument shapes; prove direct executable argument fidelity.
 - [x] Install command-evidence revision and verify a fresh MCP process with actual npm output.
 - [x] Reload the desktop MCP once more to activate the command-evidence revision in its existing connection.
+- [x] Add native ZCode manifest, supported lifecycle hooks and allowed-Stop session cleanup without resetting unfinished gates.
+- [x] Preserve terminal INCOMPLETE guidance in ZCode hook context without requesting further repair turns.
+- [x] Verify macOS suites, isolated ZCode-declared bundle commands, native manifest validation and host output processing.
+- [x] Use native ZCode plugin-root variables and prove Codex/Claude never enable the ZCode adapter, even with ZCode environment variables present.
 - [ ] Clean and verify all temporary resources (local removal blocked by automatic approval review).
 
 Activation remains separate: Codex requires one-time trust of the reviewed hooks; Nexus requires provider wiring and an authorized rollout. Neither is implied by package discovery or passing adapter tests.

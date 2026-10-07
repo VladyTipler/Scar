@@ -1,5 +1,5 @@
 {
   "name": "scar-marketplace",
   "owner": { "name": "VladyTipler" },
-  "plugins": [{ "name": "scar", "source": "./", "version": "0.1.0", "description": "Every bug leaves a defense." }]
+  "plugins": [{ "name": "scar", "source": "./", "version": "0.1.1", "description": "Every bug leaves a defense." }]
 }

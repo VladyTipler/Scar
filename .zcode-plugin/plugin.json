@@ -1,0 +1,10 @@
+{
+  "name": "scar",
+  "version": "0.1.1",
+  "description": "Reusable failure classes and executable completion checks.",
+  "author": { "name": "VladyTipler" },
+  "repository": "https://github.com/VladyTipler/Scar",
+  "skills": "./skills/",
+  "hooks": "./hooks/zcode.json",
+  "mcpServers": { "scar": { "command": "node", "args": ["${ZCODE_PLUGIN_ROOT}/dist/mcp.cjs"] } }
+}
