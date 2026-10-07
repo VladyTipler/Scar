@@ -5,6 +5,6 @@
   "author": { "name": "VladyTipler" },
   "repository": "https://github.com/VladyTipler/Scar",
   "skills": "./skills/",
-  "hooks": "./hooks/native.json",
-  "mcpServers": { "scar": { "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/dist/mcp.cjs"] } }
+  "hooks": "./hooks/zcode.json",
+  "mcpServers": { "scar": { "command": "node", "args": ["${ZCODE_PLUGIN_ROOT}/dist/mcp.cjs"] } }
 }

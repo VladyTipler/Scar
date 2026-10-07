@@ -33,6 +33,10 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
       const identity = process.platform === 'win32' ? project.toLowerCase() : project;
       const file = path.join(home, 'sessions', `${digest({ project: identity, session: event.session_id })}.json`);
       if (name === 'SessionEnd') { await abortable(() => rm(file, { force: true }), signal); return {}; }
+      const allow = async () => {
+        if (options.cleanupSessionOnStop) await abortable(() => rm(file, { force: true }), signal);
+        return {};
+      };
       const previous = await readJson(file, null, io);
       if (name === 'SessionStart' || name === 'UserPromptSubmit') {
         if (!previous || name === 'UserPromptSubmit') await atomicJson(file, { ...previous, schema: 2, repairs: 0 }, io);
@@ -47,10 +51,10 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
       const gate = await readJson(gateFile, null, io);
       if (gate && (gate.schema !== 1 || typeof gate.active !== 'boolean' || typeof gate.runId !== 'string')) throw new Error('Invalid project gate state.');
       const contract = await readJson(path.join(project, '.scar', 'contract.json'), null, io);
-      if (gate?.active === false && contract?.runId === gate.runId) return {};
+      if (gate?.active === false && contract?.runId === gate.runId) return await allow();
       // Preparation arms a durable gate outside the project. Deleting .scar
       // cannot bypass it; ordinary conversations have no active software gate.
-      if (!gate && !contract) return {};
+      if (!gate && !contract) return await allow();
       const refuse = async reason => {
         const repairs = previous?.repairs || 0;
         if (repairs >= 3) return { continue: false, stopReason: 'Scar verification remains INCOMPLETE.', systemMessage: `Scar INCOMPLETE: repair limit reached. ${reason}` };
@@ -73,8 +77,8 @@ export async function hookEvent(input, home = catalogHome(), options = {}) {
         return true;
       }, io);
       if (!closed) return await refuse('Scar INCOMPLETE: a new task was prepared during the completion gate.');
-      await atomicJson(file, { schema: 2, repairs: 0 }, io);
-      return {};
+      if (!options.cleanupSessionOnStop) await atomicJson(file, { schema: 2, repairs: 0 }, io);
+      return await allow();
     }, signal);
   } catch (error) { return hookFailure(event, error); }
   finally { clearTimeout(timer); options.signal?.removeEventListener('abort', onAbort); }

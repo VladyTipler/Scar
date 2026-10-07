@@ -27,13 +27,13 @@ Prerequisite: Node.js 20+ available to ZCode. Runtime dependencies are bundled; 
 
 1. Open **Plugin Marketplace → Add → Add Plugin Marketplace** and enter `VladyTipler/Scar` (or this repository's Git URL).
 2. In **Personal → scar-marketplace**, open **Scar** and click **Install**. For an existing installation, refresh that marketplace source and update Scar to **0.1.1**.
-3. Open a new task and select the **scar** skill. The manifest declares one skill, the Scar MCP server with ten tools, and the same four native hooks used by Codex/Claude: `SessionStart`, `UserPromptSubmit`, `Stop`, `SessionEnd`.
+3. Open a new task and select the **scar** skill. ZCode should discover one skill, the Scar MCP server with ten tools, and three hooks: `SessionStart`, `UserPromptSubmit`, `Stop`.
 
-ZCode selects `.zcode-plugin/plugin.json`, which reuses `hooks/native.json` without changing Scar's lifecycle. Stop validates task completion; only SessionEnd removes session bookkeeping. Ending an answer is not ending the session, and SessionEnd never clears an unfinished project gate.
+ZCode selects `.zcode-plugin/plugin.json` and `hooks/zcode.json`. It does not emit `SessionEnd`. Instead, an allowed Stop removes only that session's bookkeeping; blocked or incomplete attempts retain their repair counter and the durable project gate. The next prompt/start recreates session bookkeeping. Abandoned sessions can leave a small record; no background cleanup or scan is scheduled. The personal catalog is never removed.
 
-**Host compatibility is incomplete in ZCode 0.16.9:** ZCode does not recognize or emit SessionEnd, so declaring four hooks does not make all four execute. Full compatibility requires SessionEnd support in ZCode itself. Its Stop handler also does not surface Scar's terminal non-blocking `systemMessage` as context. This plugin does not work around those host limitations by moving cleanup into Stop or changing the author's output contract.
+This adapter is **ZCode-only and opt-in**: the native `.zcode-plugin` manifest uses `${ZCODE_PLUGIN_ROOT}`, and only its Stop command passes `--zcode`. Codex/Claude continue loading `hooks/native.json` with all four events and no adapter flag. Their Stop retains session bookkeeping until SessionEnd and keeps the original terminal output. Environment variables alone never enable the adapter; MCP/CLI defaults remain unchanged.
 
-MCP and skill use can be tested independently, but installation, manifest validation and direct hook subprocess tests do not prove full lifecycle support. See [verification boundaries](docs/verification.md).
+Installation/discovery is not proof that the hooks execute in a live task. Check the host's hook/MCP status and try a disposable software task: prepare it, verify a failing check cannot finish, then repair it, review and finish. See [verification boundaries](docs/verification.md).
 
 ## Normal workflow
 
