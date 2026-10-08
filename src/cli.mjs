@@ -14,7 +14,7 @@ export async function cli(args) {
   }
   const homeIndex = flags.indexOf('--home');
   const home = homeIndex < 0 ? catalogHome() : flags[homeIndex + 1];
-  if (!project || !['prepare', 'verify', 'finish', 'status', 'review', 'learn', 'catalog', 'details'].includes(operation)) throw new Error('Usage: scar <prepare|verify|finish|status|review|learn|catalog|details> <absolute-project-or-record> [--home <catalog>] [--contract <json-file>] [--reason <text>] [--session <host-session-id>] [--host-project <host-cwd>]');
+  if (!project || !['prepare', 'verify', 'finish', 'status', 'review', 'learn', 'catalog', 'details', 'cancel'].includes(operation)) throw new Error('Usage: scar <prepare|verify|finish|status|review|learn|catalog|details> <absolute-project-or-record> [--home <catalog>] [--contract <json-file>] [--reason <text>] [--session <host-session-id>] [--host-project <host-cwd>]');
   const sessionIndex=flags.indexOf('--session'),hostIndex=flags.indexOf('--host-project');
   if(sessionIndex>=0&&(!flags[sessionIndex+1]||flags[sessionIndex+1].startsWith('--')))throw new Error('--session requires a host session ID.');
   if(hostIndex>=0&&(!flags[hostIndex+1]||flags[hostIndex+1].startsWith('--')))throw new Error('--host-project requires an absolute host cwd.');
@@ -23,6 +23,7 @@ export async function cli(args) {
   const flow = new Workflow(home,scope);
   const option = name => { const index = flags.indexOf(name); return index < 0 ? undefined : flags[index + 1]; };
   const pagination = { ...(option('--offset') === undefined ? {} : { offset: Number(option('--offset')) }), ...(option('--limit') === undefined ? {} : { limit: Number(option('--limit')) }) };
+  if (operation === 'cancel') return await flow.cancel(project, { expectedRunId: option('--run-id'), reason: option('--reason') });
   if (operation === 'catalog') return await publicCatalog(flow.catalog, { ...pagination, id: option('--id'), query: option('--query') });
   if (operation === 'details') return await reportDetails(flow, project, { ...pagination, section: option('--section'), checkId: option('--check'), stream: option('--stream') });
   if (operation === 'learn') { const catalog = new PersonalCatalog(home); const record = JSON.parse(await readFile(project, 'utf8')); return publicationResult(await catalog.learn(record, (await catalog.read()).revision, { replace: flags.includes('--replace') }), record.id); }

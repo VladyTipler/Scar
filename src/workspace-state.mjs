@@ -7,6 +7,21 @@ const excludedEverywhere = new Set(['.git', 'node_modules', '.venv', 'venv', '__
 const excludedRoot = new Set(['dist', 'build', 'coverage', '.next', '.nuxt', '.output', 'target', '.worktrees', '.claude']);
 const archiveExtensions = new Set(['.dump', '.zip', '.tar', '.gz', '.tgz', '.bz2', '.xz', '.7z', '.rar']);
 const evidenceFiles = new Set(['contract.json', 'report.json', 'review.json', 'context.json']);
+const protectedExcludeRoots = new Set(['.scar', 'node_modules']);
+
+function validateExcludeRoots(excludeRoots) {
+  if (!Array.isArray(excludeRoots)) throw new TypeError('excludeRoots must be an array of unique root directory names.');
+  const roots = new Set();
+  for (const root of excludeRoots) {
+    if (typeof root !== 'string' || !root || root === '.' || root === '..' || root.includes('/') || root.includes('\\') || root.includes('\0') || path.isAbsolute(root) || path.win32.isAbsolute(root) || protectedExcludeRoots.has(root)) {
+      throw new TypeError('excludeRoots must contain unique safe root directory names.');
+    }
+    if (roots.has(root)) throw new TypeError('excludeRoots must contain unique safe root directory names.');
+    roots.add(root);
+  }
+  return roots;
+}
+
 export const builtins = [
   { id: 'SCAR-001', title: 'Empty catch swallows failures', extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue'], prevention: 'Handle or propagate the error; intentional suppression needs a documented project exception.' },
   { id: 'SCAR-002', title: 'Async forEach does not await callbacks', extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue'], prevention: 'Use for...of with await, or await Promise.all(items.map(...)).' },
@@ -14,7 +29,8 @@ export const builtins = [
 ];
 const sourceExtensions = new Set(builtins[0].extensions);
 
-export async function snapshot(project, { signal, fs = {} } = {}) {
+export async function snapshot(project, { signal, fs = {}, excludeRoots, scopeProtection = false } = {}) {
+  const configuredExcludeRoots = excludeRoots === undefined ? undefined : validateExcludeRoots(excludeRoots);
   const io = { readdir, readFile, realpath, stat, ...fs };
   const root = await abortable(() => io.realpath(path.resolve(project)), signal);
   const files = [];
@@ -29,12 +45,12 @@ export async function snapshot(project, { signal, fs = {} } = {}) {
         signal?.throwIfAborted();
         const name = path.posix.join(relative, child.name);
         const childPath = path.join(absolute, child.name);
-        if (child.isDirectory() && (excludedEverywhere.has(child.name) || !relative && excludedRoot.has(child.name))) continue;
+        if (child.isDirectory() && (excludedEverywhere.has(child.name) || !relative && ((excludedRoot.has(child.name) && (!scopeProtection || ['.worktrees', '.claude'].includes(child.name))) || configuredExcludeRoots?.has(child.name)))) continue;
         if ((relative === '.scar' || /^\.scar\/sessions\/[a-f0-9]{64}$/.test(relative)) && (evidenceFiles.has(child.name) || child.name.endsWith('.tmp') || child.name.endsWith('.lock'))) continue;
         if (child.isSymbolicLink()) { errors.push({ file: name, message: 'Symlink is outside verified file coverage; replace it or explicitly narrow the project root.' }); entries.push([name, 'symlink']); continue; }
         if (child.isDirectory()) { pending.push({ absolute: childPath, relative: name, directory: true }); continue; }
         if (!child.isFile()) continue;
-        if (archiveExtensions.has(path.extname(name).toLowerCase())) continue;
+        if (!scopeProtection && archiveExtensions.has(path.extname(name).toLowerCase())) continue;
         pending.push({ absolute: childPath, relative: name, directory: false });
       }
       return;
@@ -68,6 +84,6 @@ export async function snapshot(project, { signal, fs = {} } = {}) {
   entries.sort((a, b) => a[0].localeCompare(b[0]));
   files.sort((a, b) => a.path.localeCompare(b.path));
   errors.sort((a, b) => a.file.localeCompare(b.file) || a.message.localeCompare(b.message));
-  return { root, files, entries, errors, fingerprint: digest(entries) };
+  return { root, files, entries, errors, fingerprint: configuredExcludeRoots === undefined ? digest(entries) : digest({ entries, excludeRoots: [...configuredExcludeRoots].sort() }) };
 }
 export async function fingerprint(project) { return (await snapshot(project)).fingerprint; }

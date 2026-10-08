@@ -24,6 +24,17 @@
 - [x] Reject unsupported cmd argument shapes; prove direct executable argument fidelity.
 - [x] Install command-evidence revision and verify a fresh MCP process with actual npm output.
 - [x] Reload the desktop MCP once more to activate the command-evidence revision in its existing connection.
+- [x] Add native ZCode manifest, supported lifecycle hooks and allowed-Stop session cleanup without resetting unfinished gates.
+- [x] Preserve terminal INCOMPLETE guidance in ZCode hook context without requesting further repair turns.
+- [x] Verify macOS suites, isolated ZCode-declared bundle commands, native manifest validation and host output processing.
+- [x] Use native ZCode plugin-root variables and prove Codex/Claude never enable the ZCode adapter, even with ZCode environment variables present.
+- [x] Local 0.1.2: read-only analysis, trusted owner-bound implementation, reviewer refusal and target/cwd separation.
+- [x] Explicit generated scope and unchanged-failure retry refusal; exact-generation cancellation preserves history.
+- [x] Local 0.1.3 operator-owned session/resume bridge: verified host identity, private host restart, owner/workspace isolation and delegation refusal.
+- [x] Actual host-launched MCP scripted full-cycle verification and CLI inspection without model requests.
+- [x] Local 0.1.4 native PreToolUse → one-use request binding → scoped MCP, without a manual per-task launcher.
+- [x] Local 0.1.5 explicit documentation scope, protected covered-file baseline, source warnings, bounded summaries and owner-only archived phase replacement.
+- [ ] Live model-driven Desktop acceptance and general child-role metadata integration (recognized reviewer identities remain read-only).
 - [ ] Clean and verify all temporary resources (local removal blocked by automatic approval review).
 - [x] Exact documented SCAR-001 project exceptions: full-byte hashes, strict metadata, stale/unused rejection and auditable approvals.
 - [x] Bounded concurrent fresh snapshots and finite UNC Stop allowance; native supervision and same-size/same-time regressions.
@@ -31,4 +42,19 @@
 Activation remains separate: Codex requires one-time trust of the reviewed hooks; Nexus requires provider wiring and an authorized rollout. Neither is implied by package discovery or passing adapter tests.
 
 - [x] Isolate per-chat task contracts, reports and gates; retain shared catalog and legacy compatibility.
+- [x] Local 0.1.6: port ZCode customizations onto upstream b163bba without reverting isolation, fresh scans or exact project exceptions.
+- [x] Keep capability/evidence directories distinct and bind native status/details to the calling chat.
+- [x] Prove old owner-root cancellation and scoped transition preserve old contract bytes; prevent oversized compact-report hangs.
+- [x] Validate and update installed 0.1.6 copies on macOS and Yaroslav-PC Linux; retain original local source and personal data.
+- [x] Independent scoped review: 21 tests pass, no actionable findings; actual installed native-hook/MCP smokes and bundle hashes match on both machines.
 - [x] Prove real MCP/native hook multi-worktree and concurrency boundaries; publish GitHub and verify installed bundles.
+- [x] Unreleased local 0.1.7: add explicit shared mandatory project checks without merging session contracts, reports or owner gates.
+- [x] TDD: policy validation, conflicts/deduplication, freshness, missing-policy refusal and real pooled native-hook/MCP compatibility (15 new tests).
+- [x] Independently review and simplify the scoped delta; synchronize existing design/session/docs specifications and record macOS verification limits.
+- [x] Prepare a detailed local PR description; retain private policy and existing installation unchanged. Publication was subsequently authorized and the combined 0.1.7 review PR submitted.
+- [x] Unreleased local 0.1.8: decouple authorized target project from chat cwd with exact schema-2 one-use capabilities; retain schema-1 meaning and owner/generation isolation.
+- [x] TDD: external native/launcher target, replay/retarget refusal, real pooled MCP learning/checks/Stop/cancellation; reject active-task prepare before durable binding writes.
+- [x] Rebuild local bundles and verify macOS unit/integration compatibility; synchronize existing design, session and native-binding specifications. PR update remains separate; subsequent installation evidence is recorded below.
+- [x] Authorized local plugin-manager update to 0.1.8; preserve previous source/cache and personal data, verify installed runtime hashes and native-hook/MCP subprocess smoke.
+- [x] Restart Desktop on explicit user request; confirm active 0.1.8 MCP and absence of old 0.1.6 MCPs. Settings Refresh alone does not replace resident processes.
+- [ ] Verify model-driven continuation of the affected external-project task after the 0.1.8 update; runtime activation alone does not certify task completion.

@@ -21,6 +21,28 @@ Validated with Codex 0.156.1. This release uses `.codex-plugin/plugin.json` and 
 
 Codex MCP arguments use a relative bundle path with a plugin-relative `cwd`; this loader does not expand hook path variables in MCP arguments. Claude's compatibility manifest supplies its own host path syntax. [MCP loader source](https://github.com/openai/codex/blob/rust-v0.156.1/codex-rs/codex-mcp/src/plugin_config.rs).
 
+## Install in ZCode
+
+Prerequisite: Node.js 20+ available to ZCode. Runtime dependencies are bundled; no `npm install` or separate server is needed.
+
+1. Open **Plugin Marketplace → Add → Add Plugin Marketplace** and enter `VladyTipler/Scar` (or this repository's Git URL).
+2. In **Personal → scar-marketplace**, open **Scar** and click **Install**. For an existing installation, refresh that marketplace source and update the local Scar build to **0.1.6**.
+3. Open a new task and select the **scar** skill. ZCode should discover one skill, the scoped Scar MCP server with eleven tools (including owner-only cancellation), and three lifecycle hooks (`SessionStart`, `UserPromptSubmit`, `Stop`) plus a narrowly matched `PreToolUse` identity-binding hook.
+
+ZCode selects `.zcode-plugin/plugin.json` and `hooks/zcode.json`. It does not emit `SessionEnd`. Instead, an allowed Stop removes only that session's bookkeeping; blocked or incomplete attempts retain their repair counter and the durable project gate. The next prompt/start recreates session bookkeeping. Abandoned sessions can leave a small record; no background cleanup or scan is scheduled. The personal catalog is never removed.
+
+This adapter is **ZCode-only and opt-in**: the native `.zcode-plugin` manifest uses `${ZCODE_PLUGIN_ROOT}`, and its MCP launcher and Stop command pass `--zcode`. Codex/Claude continue loading `hooks/native.json` with all four events and no adapter flag. Their Stop retains session bookkeeping until SessionEnd and keeps the original terminal output. Environment variables alone never enable the adapter; MCP/CLI defaults remain unchanged.
+
+Local 0.1.4 preserves analysis/implementation separation and adds [automatic native binding](docs/zcode-native-binding.md). For questions/reviews, call `scar_prepare` with `mode:"analysis"`; it creates no evidence/gate/checks. For explicit implementation, use ordinary tools in the actual project workspace: native PreToolUse injects a one-use request binding using the host session, exact arguments and cwd. No manual session ID, token or console launcher is needed per task. Missing/stale binding fails closed. Reviewer subagents cannot arm or mutate tasks; unchanged FAIL is inspected, not rerun.
+
+The optional operator-owned [ZCode session bridge](docs/zcode-session-bridge.md) can resume an inactive persisted root session with its host-verified identity and separate Scar MCP process. It uses a private host restart rather than deleting session event history, fixes the target workspace, and disables delegation. It remains an optional operator path; native plugin automation in 0.1.4 does not require it per task.
+
+Local 0.1.5 adds [explicit documentation task scope](docs/documentation-task-scope.md). Supply authorized Markdown paths and real docs checks; protected covered files outside scope must remain unchanged. Existing native source findings are warnings; documentation READY is not repository readiness. focusPaths does not restrict verification. Old active tasks are not silently re-scoped; user-authorized owner cancellation archives them before a new phase.
+
+Administrative cancellation archives the exact mistaken generation with status CANCELLED, never READY. Explicit generated root exclusions are bound to evidence; no blanket test or empty-catch suppression exists.
+
+Installation/discovery is not proof that the hooks execute in a live task. Check the host's hook/MCP status and try a disposable software task: prepare it, verify a failing check cannot finish, then repair it, review and finish. See [verification boundaries](docs/verification.md).
+
 ## Normal workflow
 
 Tell the agent what to build. Scar complements your existing SDD and TDD instructions, including superpowers.
@@ -37,7 +59,11 @@ Hooks have internal work budgets of 1 second for startup/prompt, 2 seconds for l
 
 An expanded class retains its ID, old extension scope and historical fixture coverage. The personal catalog lives outside the installation at `<user-home>/.scar/catalog.json`, survives plugin upgrades and applies across projects. Project `.scar/` contains generated contracts and complete reports. Neither belongs in the public plugin repository.
 
-Concurrent chats use explicit native `sessionId` and `hostProject` arguments, supplied by hook context. Each chat keeps separate contracts/reports and can verify worktrees outside its original cwd; Stop checks every active workspace bound to that chat. Legacy unscoped tools retain shared project behavior. Learned detector programs and fixtures stay in the single personal catalog when a worktree is removed. See [session isolation](docs/session-isolation.md). An already-running MCP connection may need a host reload to expose the new arguments; the agent can use the same bundled CLI in the meantime.
+Native Codex/Claude chats use explicit `sessionId` and `hostProject` arguments supplied by hook context. ZCode calls instead receive identity through the trusted one-use native binding; never supply session IDs or tokens manually. Each chat keeps separate contracts/reports and can verify worktrees outside its original cwd; Stop checks every active workspace bound to that chat. Legacy unscoped tools retain shared project behavior. Learned detector programs and fixtures stay in the single personal catalog when a worktree is removed. See [session isolation](docs/session-isolation.md). An already-running MCP connection needs a host reload to expose updated tools. The bundled CLI supports legacy/native-host use, but is not an escape hatch for owner-bound ZCode tasks. Local **0.1.6** combines these upstream improvements with all ZCode customizations; see [port and compatibility](docs/local-upstream-port.md).
+
+Unreleased local **0.1.7** adds optional project-wide mandatory checks in `.scar/project-checks.json`: every implementation chat runs these in addition to its own checks, without sharing tasks or reports. Conflicting same-ID task commands are refused; policy changes invalidate prior evidence. No policy preserves 0.1.6 behavior. The agent configures only authorized real project commands; analysis creates nothing. See [shared check policy](docs/session-isolation.md#shared-mandatory-project-checks-unreleased-local-017). This source revision is not published or installed.
+
+Unreleased local **0.1.8** removes the ZCode target==chat-cwd restriction: use any user-authorized absolute project directory permitted by the host. Owner identity, one-use exact-target binding, session isolation and project-local mandatory checks remain enforced; Stop follows the prepared target. Native binding schema 2 separates target from workspace, while old schema-1 requests retain their original meaning. This version has been installed locally and its MCP activation confirmed after an explicitly authorized Desktop restart; the changes are submitted for review, not an upstream release; see [target binding](docs/zcode-native-binding.md).
 
 ## Catalog size and model cost
 
@@ -66,6 +92,6 @@ npm test
 npm run test:feature
 ```
 
-On Windows run npm/npx through PowerShell. Tests cover real filesystem/process/MCP boundaries, no-Git learning and fresh-process reuse, stale reports, bounded context, prior-generation regression retention, native payloads and isolated bundles without `node_modules`. Windows and Linux runtime suites are exercised; macOS has not been exercised on a real host. See [verification evidence](docs/verification.md) for exact results and activation boundaries.
+On Windows run npm/npx through PowerShell. Tests cover real filesystem/process/MCP boundaries, no-Git learning and fresh-process reuse, stale reports, bounded context, prior-generation regression retention, native payloads and isolated bundles without `node_modules`. Windows and Linux runtime suites were exercised previously; the ZCode compatibility revision also runs the available suites and isolated bundled integration tests on macOS. Windows-only tests are skipped on macOS; this does not imply a live ZCode task was exercised. See [verification evidence](docs/verification.md) for exact results and activation boundaries.
 
 Source licensing remains to be selected. Bundled dependency licenses are preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

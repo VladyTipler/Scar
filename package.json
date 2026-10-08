@@ -1,6 +1,6 @@
 {
   "name": "scar-plugin",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "node --test tests/unit.test.mjs tests/discovery.test.mjs tests/adversarial.test.mjs tests/context.test.mjs",
-    "test:feature": "node --test tests/workflow.test.mjs tests/transport.test.mjs tests/sharing.test.mjs tests/nexus.test.mjs tests/final-audit.test.mjs tests/package.test.mjs tests/hook-budget.test.mjs tests/process.test.mjs tests/exceptions.test.mjs tests/session-isolation.test.mjs",
+    "test:feature": "node --test tests/workflow.test.mjs tests/transport.test.mjs tests/sharing.test.mjs tests/nexus.test.mjs tests/final-audit.test.mjs tests/package.test.mjs tests/hook-budget.test.mjs tests/process.test.mjs tests/zcode.test.mjs tests/task-mode.test.mjs tests/analysis-mcp.test.mjs tests/workspace-scope.test.mjs tests/zcode-session.test.mjs tests/zcode-protocol.test.mjs tests/zcode-host.test.mjs tests/native-binding.test.mjs tests/native-binding-mcp.test.mjs tests/documentation-scope.test.mjs tests/exceptions.test.mjs tests/session-isolation.test.mjs tests/port-session-compat.test.mjs tests/project-checks.test.mjs tests/project-checks-mcp.test.mjs tests/target-binding.test.mjs",
     "build": "node scripts/build.mjs"
   },
   "dependencies": {

@@ -9,7 +9,7 @@ Approved scope: one cross-platform plugin for Codex and Nexus. Automatic integra
 - Lifecycle hooks: inject cached rules without source traversal and refuse closure of prepared software tasks without fresh verification and a learning review. Preparation arms the gate; zero-scan startup cannot infer unprepared software edits. Closed gates leave ordinary conversations unaffected.
 - MCP tools: the same prepare, verify, learn and finish operations, with structured results.
 - A catalog stored outside the plugin installation. Built-in generic guards plus personal classes with applicable scope, evidence, counterexamples and reusable detector code.
-- Existing repository checks remain the primary behavior/integration tests. Scar coordinates them rather than replacing the test runner.
+- Existing repository checks remain the primary behavior/integration tests. Scar coordinates them rather than replacing the test runner. An explicit `.scar/project-checks.json` supplies mandatory project-wide checks independently of per-session contracts. Every implementation executes their validated union with task checks; conflicts fail closed and policy changes revoke evidence. Missing policy preserves legacy behavior. See [session verification policy](session-isolation.md).
 
 ## Source of truth and sharing
 
@@ -27,7 +27,7 @@ Required evidence:
 
 1. Known violations and independent variants fail; valid counterexamples pass.
 2. New personal detectors are validated against bad, alternative bad and good fixtures before publication.
-3. Failed commands, timeouts, changed sources, changed contracts and changed catalog revisions cannot produce READY.
+3. Failed commands, timeouts, changed sources, changed contracts and changed catalog revisions cannot produce READY. Mandatory project-policy changes also revoke evidence; no chat may replace or omit a configured mandatory command through its task checks. Task-specific failures and owner gates remain isolated.
 4. Learning read-back and a second process observe the same record.
 5. A real SDK MCP client exercises the stdio server.
 6. Real hook payloads exercise SessionStart and Stop, including no-Git projects and non-coding tasks.
@@ -41,6 +41,10 @@ The complete catalog is processed by code. Preventive descriptions are ranked by
 Initial executable guards target well-defined JavaScript/TypeScript/Vue error shapes. Other languages remain supported through project checks and learned programmatic detectors. A catalog description without an executable protection is reported as a coverage gap, not a passing check.
 
 A detector protects only its declared scope. Model review complements executable checks for contextual risks; it cannot substitute for required command evidence.
+
+## Host workspace and target project
+
+Local 0.1.8 treats host cwd as session origin, not a project-access fence. An explicitly authorized implementation may select any absolute target directory permitted by the host. Native one-use identity records bind that canonical target separately from the original workspace; strict Workflow authorization checks the exact per-call target and active owner/generation. Session reports and durable Stop bindings remain project/session-specific. The operator launcher verifies session metadata but does not impose project==cwd. This changes no host permissions and authorizes no unrelated work.
 
 ## Host constraints to verify
 
