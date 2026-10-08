@@ -49,7 +49,7 @@ export class Workflow {
     if (mode === 'implementation' && this.host.scoped) {
       ownerSessionId = trustedSession(this.host.sessionId);
       if (reviewerSession(ownerSessionId)) throw new Error('Reviewer subagents cannot create an implementation task.');
-      if (this.host.workspace && await realpath(project) !== await realpath(this.host.workspace)) throw new Error('Implementation project differs from the verified host workspace.');
+      if (this.host.targetProject && await realpath(project) !== await realpath(this.host.targetProject)) throw new Error('Implementation project differs from the bound target project.');
     }
     const context = await this.context(project, { excludeRoots: options?.excludeRoots, scopeProtection: Boolean(options?.scope) });
     if (mode === 'analysis') return { status: 'ANALYSIS', mode, project: context.state.root, ...preventionContext(context.classes, options?.task, options?.focusPaths), errorCount: context.state.errors.length, errors: context.state.errors.slice(0, 4) };
@@ -76,6 +76,7 @@ export class Workflow {
         const gate = await readJson(gateFile, null);
         const prior = await readJson(files.contract, null);
         if (gate?.active && (ownerSessionId || prior?.ownerSessionId)) throw new Error('An active task already owns this project; finish or explicitly cancel it before preparing another.');
+        if (ownerSessionId && (await readSessionTask(this.home, ownerSessionId))?.active) throw new Error('This session already has an active task; it cannot be replaced implicitly.');
         // Persistent author bindings are distinct from trusted per-chat ownership.
         if (this.sessionId) {
           const hostProject = this.hostProject ?? projectIdentity(project);
@@ -88,8 +89,6 @@ export class Workflow {
           await atomicJson(file, { schema: 1, hostProject, sessionId: this.sessionId, projects });
         }
         if (ownerSessionId) {
-          const previous = await readSessionTask(this.home, ownerSessionId);
-          if (previous?.active) throw new Error('This session already has an active task; it cannot be replaced implicitly.');
           await atomicJson(sessionTaskFile(this.home, ownerSessionId), { schema: 2, active: true, ownerSessionId, project: context.state.root, runId, evidenceSessionId: this.sessionId ?? null, hostProject: this.hostProject ?? projectIdentity(project), ...seal });
         }
         await atomicJson(gateFile, { schema: 1, active: true, runId, ...seal, ...(ownerSessionId ? { ownerSessionId } : {}) });
@@ -111,7 +110,7 @@ export class Workflow {
     if (this.host.scoped) {
       const sessionId = trustedSession(this.host.sessionId);
       if (reviewerSession(sessionId)) throw new Error('Reviewer subagents may inspect only, not execute or mutate implementation.');
-      if (this.host.workspace && await realpath(project) !== await realpath(this.host.workspace)) throw new Error('Implementation project differs from the verified host workspace.');
+      if (this.host.targetProject && await realpath(project) !== await realpath(this.host.targetProject)) throw new Error('Implementation project differs from the bound target project.');
     }
     const contract = await readJson(this.files(project).contract, null);
     requireOwner(contract, this.host);

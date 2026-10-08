@@ -51,4 +51,10 @@ Activation remains separate: Codex requires one-time trust of the reviewed hooks
 - [x] Unreleased local 0.1.7: add explicit shared mandatory project checks without merging session contracts, reports or owner gates.
 - [x] TDD: policy validation, conflicts/deduplication, freshness, missing-policy refusal and real pooled native-hook/MCP compatibility (15 new tests).
 - [x] Independently review and simplify the scoped delta; synchronize existing design/session/docs specifications and record macOS verification limits.
-- [x] Prepare a detailed local PR description; retain private policy and existing installation unchanged. No publication authorized for this revision.
+- [x] Prepare a detailed local PR description; retain private policy and existing installation unchanged. Publication was subsequently authorized and the combined 0.1.7 review PR submitted.
+- [x] Unreleased local 0.1.8: decouple authorized target project from chat cwd with exact schema-2 one-use capabilities; retain schema-1 meaning and owner/generation isolation.
+- [x] TDD: external native/launcher target, replay/retarget refusal, real pooled MCP learning/checks/Stop/cancellation; reject active-task prepare before durable binding writes.
+- [x] Rebuild local bundles and verify macOS unit/integration compatibility; synchronize existing design, session and native-binding specifications. PR update remains separate; subsequent installation evidence is recorded below.
+- [x] Authorized local plugin-manager update to 0.1.8; preserve previous source/cache and personal data, verify installed runtime hashes and native-hook/MCP subprocess smoke.
+- [x] Restart Desktop on explicit user request; confirm active 0.1.8 MCP and absence of old 0.1.6 MCPs. Settings Refresh alone does not replace resident processes.
+- [ ] Verify model-driven continuation of the affected external-project task after the 0.1.8 update; runtime activation alone does not certify task completion.

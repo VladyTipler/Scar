@@ -1,6 +1,6 @@
 {
   "name": "scar",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Failure-class learning and executable verification.",
   "author": { "name": "VladyTipler" },
   "repository": "https://github.com/VladyTipler/Scar",

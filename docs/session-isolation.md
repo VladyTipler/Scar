@@ -8,6 +8,10 @@ Data: scoped task files live in project/.scar/sessions/<session hash>; gate outs
 
 TDD: two same-project chats success/failure isolation; legacy coexistence; different worktrees from one host cwd; all-project aggregation; generation races; alias canonicalization; missing evidence/restart; blocked old pool tools cannot overwrite scoped paths; real stdio MCP/CLI/native hook subprocess; retained shared catalog/detector fixtures and legacy suites. Build/package integrity, scoped simplify and cleanup before authorized GitHub push. Installed hook/MCP bundles updated atomically with rollback retained; already-running pooled MCP activation reported separately.
 
+## Native target independence (unreleased local 0.1.8)
+
+Native ZCode calls and trusted launcher calls may select a user-authorized absolute project outside the chat cwd, including unrelated directories and worktrees. The original workspace remains the host-project binding origin; the selected canonical project is bound to the exact operation/arguments in a schema-2 one-use capability. Schema-1 capabilities retain their original exact-workspace meaning; old runtimes refuse schema 2 rather than widening it. One active owner task per ZCode chat, owner-only mutation/cancellation, project-local mandatory checks and isolated reports remain unchanged. Stop follows the stored target and original host-project binding, without executing commands. A rejected prepare for another target does not modify durable bindings.
+
 ## Shared mandatory project checks (unreleased local 0.1.7)
 
 Task isolation does not isolate the project's required verification policy. An agent/operator may explicitly configure `.scar/project-checks.json` once in the canonical project:

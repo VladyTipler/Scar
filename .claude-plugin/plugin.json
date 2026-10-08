@@ -1,6 +1,6 @@
 {
   "name": "scar",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Reusable failure classes and executable completion checks.",
   "skills": "./skills/",
   "hooks": "./hooks/native.json",

@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { access, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, readFile, readdir, writeFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { runCheck } from '../src/process.mjs';
-import { taskFiles } from '../src/task-scope.mjs';
-import { fixture } from './helpers.mjs';
+import { taskFiles, bindingFile } from '../src/task-scope.mjs';
+import { fixture, candidate } from './helpers.mjs';
+import { Catalog } from '../src/catalog.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 async function native(home, project, sessionId, name, args) {
@@ -72,6 +73,55 @@ test('native owner explicitly retires legacy task then prepares documentation wi
   assert.equal(finished.structuredContent.warnings[0].id, 'SCAR-001');
   assert.equal((await call('sess_docs', 'scar_details', { project, section: 'warnings' })).structuredContent.total, 1);
   assert.equal((await readdir(path.join(home, 'cancellations'))).length, 1);
+});
+
+test('pooled native calls target an external project, learn there and keep Stop and owners isolated', async t => {
+  const home = await fixture(t), cwd = await fixture(t, { 'host.ts': 'try {} catch {}' });
+  const project = await fixture(t, {
+    'main.ts': 'export const value=1;',
+    '.scar/project-checks.json': JSON.stringify({ schema: 1, checks: [{ id: 'required', command: '$NODE', args: ['-e', "console.log('target-check')"] }] })
+  });
+  const otherProject = await fixture(t, { 'next.ts': 'export const next=1;' });
+  const c = await client(t, home);
+  const call = async (sid, name, args) => {
+    const h = await native(home, cwd, sid, name, args);
+    assert.notEqual(h.hookSpecificOutput?.permissionDecision, 'deny', JSON.stringify(h));
+    return c.callTool({ name, arguments: h.hookSpecificOutput.updatedInput });
+  };
+  const lifecycle = async (sid, name) => {
+    const result = await runCheck({ id: 'hook', command: '$NODE', args: [path.join(root, 'dist/hook.cjs'), '--zcode'], timeoutMs: 5000 }, cwd, JSON.stringify({ cwd, session_id: sid, hook_event_name: name }), { SCAR_HOME: home });
+    assert.equal(result.status, 'PASS', result.stderr);
+    return JSON.parse(result.stdout);
+  };
+  for (const sid of ['external-a', 'external-b']) await lifecycle(sid, 'SessionStart');
+  const prepared = await call('external-a', 'scar_prepare', { project, mode: 'implementation', task: 'External target', checks: [] });
+  assert.equal(prepared.structuredContent.status, 'PREPARED');
+  assert.equal((await call('external-b', 'scar_prepare', { project, mode: 'implementation', task: 'Independent external target', checks: [{ id: 'local', command: '$NODE', args: ['-e', 'process.exit(3)'] }] })).structuredContent.status, 'PREPARED');
+  assert.equal((await lifecycle('external-a', 'Stop')).decision, 'block');
+  assert.equal((await call('external-a', 'scar_prepare', { project: otherProject, mode: 'implementation', task: 'Cannot replace active task', checks: [] })).isError, true);
+  assert.equal((await call('external-other', 'scar_finish', { project })).isError, true);
+  assert.equal((await call('external-a', 'scar_finish', { project: otherProject })).isError, true);
+  const catalog = new Catalog(home);
+  const learned = await call('external-a', 'scar_learn', { expectedRevision: (await catalog.read()).revision, record: candidate });
+  assert.notEqual(learned.isError, true, JSON.stringify(learned));
+  assert.ok((await catalog.read()).records.some(r => r.id === candidate.id));
+  assert.equal((await call('external-a', 'scar_review', { project, reason: 'Reviewed external target, shared checks and exact native owner.' })).structuredContent.status, 'REVIEWED');
+  assert.equal((await call('external-a', 'scar_finish', { project })).structuredContent.status, 'READY');
+  const details = await call('external-a', 'scar_details', { project, checkId: 'required', stream: 'stdout' });
+  assert.match(details.structuredContent.text, /target-check/);
+  assert.equal((await call('external-b', 'scar_verify', { project })).structuredContent.status, 'FAIL');
+  const binding = JSON.parse(await readFile(bindingFile(home, await realpath(cwd), 'external-a'), 'utf8'));
+  assert.equal(binding.projects[0].project, await realpath(project));
+  const bReport = await readFile(taskFiles(project, 'external-b').report, 'utf8');
+  assert.deepEqual(await lifecycle('external-a', 'Stop'), {});
+  assert.equal(await readFile(taskFiles(project, 'external-b').report, 'utf8'), bReport);
+  assert.equal((await lifecycle('external-b', 'Stop')).decision, 'block');
+  const next = await call('external-a', 'scar_prepare', { project: otherProject, mode: 'implementation', task: 'Next external task', checks: [{ id: 'next', command: '$NODE', args: ['-e', 'process.exit(0)'] }] });
+  assert.equal(next.structuredContent.status, 'PREPARED');
+  assert.equal((await call('external-other', 'scar_cancel', { project: otherProject, expectedRunId: next.structuredContent.runId, reason: 'Cannot cancel another chat external task.' })).isError, true);
+  assert.equal((await call('external-a', 'scar_cancel', { project: otherProject, expectedRunId: next.structuredContent.runId, reason: 'Owner explicitly withdraws its next external task.' })).structuredContent.status, 'CANCELLED');
+  assert.deepEqual(await lifecycle('external-a', 'Stop'), {});
+  await assert.rejects(access(path.join(cwd, '.scar')), { code: 'ENOENT' });
 });
 
 test('native hook does not bind analysis, rejects reviewer mutation and leaves unknown forged identity refused', async t => {

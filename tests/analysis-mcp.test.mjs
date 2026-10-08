@@ -38,15 +38,17 @@ test('ZCode MCP defaults to side-effect-free analysis and refuses forged impleme
   await assert.rejects(() => access(path.join(project, '.scar')), { code: 'ENOENT' });
 });
 
-test('bridge-bound MCP refuses implementation outside verified workspace', async t => {
+test('bridge-bound MCP permits external projects but retains exact owner task targeting', async t => {
   const home = await fixture(t), project = await fixture(t), other = await fixture(t);
   const client = new Client({ name: 'bridge-workspace', version: '1' });
   t.after(() => client.close());
   await client.connect(new StdioClientTransport({ command: process.execPath, args: [path.join(root, 'dist/mcp.cjs'), '--zcode'], env: { ...process.env, SCAR_HOME: home, SCAR_HOST_SESSION_ID: 'owner', SCAR_HOST_WORKSPACE: project } }));
-  const r = await client.callTool({ name: 'scar_prepare', arguments: { project: other, task: 'Wrong workspace', mode: 'implementation' } });
-  assert.equal(r.isError, true);
-  assert.match(r.content[0].text, /workspace|project/i);
-  await assert.rejects(() => access(path.join(other, '.scar')), { code: 'ENOENT' });
+  const r = await client.callTool({ name: 'scar_prepare', arguments: { project: other, task: 'Authorized external project', mode: 'implementation', checks: [{ id: 'behavior', command: '$NODE', args: ['-e', 'process.exit(0)'] }] } });
+  assert.notEqual(r.isError, true, JSON.stringify(r));
+  assert.equal(r.structuredContent.status, 'PREPARED');
+  assert.equal((await client.callTool({ name: 'scar_verify', arguments: { project: other } })).structuredContent.status, 'VERIFIED');
+  assert.equal((await client.callTool({ name: 'scar_finish', arguments: { project } })).isError, true);
+  await assert.rejects(() => access(path.join(project, '.scar')), { code: 'ENOENT' });
 });
 
 test('session-bound MCP and actual hook target owner project, not host cwd', async t => {

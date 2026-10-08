@@ -16,7 +16,7 @@ The operator must ensure the selected session is inactive in Desktop/other hosts
 4. Resume the exact verified ID with `mcpServers` overriding `plugin:scar:scar`. Supply `SCAR_HOST_SESSION_ID` and canonical `SCAR_HOST_WORKSPACE` from verified metadata, not model input. Use `isolation:"session"` and the bundled MCP `--zcode` path.
 5. Revalidate the returned snapshot. Permit only read/messages/events/subscribe/send/stop for that session.
 
-Implementation remains explicitly mode=implementation. The bridge-bound MCP rejects a different target workspace; unbound MCP still refuses implementation. `bridgeReady` means the binding was configured, not a model-driven task or provider credential check completed.
+Implementation remains explicitly mode=implementation. Since local 0.1.8 the bridge-bound MCP may prepare a user-authorized project outside the verified chat workspace. The bridge still verifies the actual session's workspace/identity and refuses session/configuration substitution; those checks do not restrict which project that session may implement. Unbound MCP still refuses implementation. A task in another project cannot be finished or cancelled without its exact owning session and generation. `bridgeReady` means the binding was configured, not a model-driven task or provider credential check completed.
 
 ## Delegation policy
 
@@ -38,6 +38,6 @@ The entrypoint uses packaged provider configuration when discoverable; explicit 
 
 Unit/transport tests cover identity/workspace/active-parent mismatch, host errors, Unicode callbacks, frame limits, EOF/shutdown and forbidden configuration/delegation overrides. The opt-in real host test uses synthetic temporary imported-history fixtures solely to avoid model requests, while the production bridge resumes only pre-existing sessions.
 
-Real test: two actual host-issued root IDs, separate host/MCP processes, 10 tools per MCP, scripted calls in those SAME host-launched MCPs: prepare implementation → blocked Stop → FAIL → unchanged finish refusal → source fix → review/finish READY → allowed Stop. Foreign workspace is rejected. Process PIDs are gone after cleanup; no model requests are logged. The CLI inspection entrypoint is also exercised.
+Real test: two actual host-issued root IDs, separate host/MCP processes, 10 tools per MCP, scripted calls in those SAME host-launched MCPs: prepare implementation → blocked Stop → FAIL → unchanged finish refusal → source fix → review/finish READY → allowed Stop. An attempt to finish an unrelated, unowned project is rejected; this is task ownership, not a cwd restriction. Process PIDs are gone after cleanup; no model requests are logged. The CLI inspection entrypoint is also exercised.
 
 This does not prove a live model edit, normal Desktop automatic activation, Windows/Linux execution of this host bridge, or safe child-session propagation. Delegation intentionally remains disabled.

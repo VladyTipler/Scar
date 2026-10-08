@@ -42,6 +42,10 @@ Initial executable guards target well-defined JavaScript/TypeScript/Vue error sh
 
 A detector protects only its declared scope. Model review complements executable checks for contextual risks; it cannot substitute for required command evidence.
 
+## Host workspace and target project
+
+Local 0.1.8 treats host cwd as session origin, not a project-access fence. An explicitly authorized implementation may select any absolute target directory permitted by the host. Native one-use identity records bind that canonical target separately from the original workspace; strict Workflow authorization checks the exact per-call target and active owner/generation. Session reports and durable Stop bindings remain project/session-specific. The operator launcher verifies session metadata but does not impose project==cwd. This changes no host permissions and authorizes no unrelated work.
+
 ## Host constraints to verify
 
 Codex plugin hooks require one-time trust in the host UI. Nexus command hooks run in a plugin-only sandbox; workspace inspection must use an appropriate runtime bridge. Current Nexus MCP hooks do not automatically forward the event payload, so a bridge must be verified before claiming automatic Nexus completion enforcement.

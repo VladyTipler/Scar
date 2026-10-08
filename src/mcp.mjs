@@ -7,7 +7,7 @@ import { consumeBinding } from './native-binding.mjs';
 import { publicCatalog, compactReport, publicationResult, reportDetails, preventionContext, classSource } from './presentation.mjs';
 const scoped = process.argv.includes('--zcode');
 const flow = new Workflow(undefined, { scoped, sessionId: process.env.SCAR_HOST_SESSION_ID, workspace: process.env.SCAR_HOST_WORKSPACE });
-const server = new McpServer({ name: 'scar', version: '0.1.7' });
+const server = new McpServer({ name: 'scar', version: '0.1.8' });
 const project = z.string().describe('Absolute workspace path on the same host as Scar.');
 const sessionScope = scoped ? {} : { sessionId: z.string().optional().describe('Host chat identity for legacy native clients.'), hostProject: z.string().optional().describe('Original host cwd for legacy scoped clients.') };
 const scopedFlow = (args, callFlow) => scoped ? callFlow : new Workflow(flow.home, { sessionId: args.sessionId, hostProject: args.hostProject ?? (args.sessionId === undefined ? undefined : args.project) });

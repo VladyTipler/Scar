@@ -37,11 +37,12 @@ test('read-only calls do not issue tokens or write state', async t => {
   assert.deepEqual(await readdir(home), []);
 });
 
-test('wrong project, missing identity, forged token and child mutation fail without issuance', async t => {
-  const project = await fixture(t), other = await fixture(t), home = await fixture(t);
+test('invalid project, missing identity, forged token and child mutation fail without issuance', async t => {
+  const project = await fixture(t), home = await fixture(t);
   const { issueBinding } = await load();
   for (const e of [
-    event(project, args(other)),
+    event(project, args('relative/project')),
+    event(project, { ...args(project), project: undefined }),
     { ...event(project, args(project)), session_id: undefined },
     event(project, { ...args(project), _scarBinding: 'forged' }),
     event(project, args(project), 'sess_subagent_agent_review'),

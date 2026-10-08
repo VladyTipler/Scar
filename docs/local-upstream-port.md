@@ -1,4 +1,4 @@
-# Local upstream port — 0.1.6 base and unreleased 0.1.7 extension
+# Local upstream port — 0.1.6 base and unreleased 0.1.7/0.1.8 extensions
 
 ## Source and compatibility contract
 
@@ -17,6 +17,10 @@ This local release ports the 0.1.5 ZCode customization onto upstream `b163bbab89
 The requested extension uses an explicit `.scar/project-checks.json` file (`schema: 1`, nonempty `checks` array) shared by every chat in the same canonical project. Shared checks are mandatory and additive to per-task checks, including explicitly scoped documentation tasks; they never merge task ownership, reports, reviews or gates. Without the file, existing 0.1.6 behavior remains unchanged. Fourteen filesystem/Workflow regressions pass locally; the initial RED demonstrated seven missing-policy enforcement failures, with additional RED cycles for null/scalar policy and non-string IDs. A real pooled native-hook/MCP regression reproduces missing enforcement against an isolated installed 0.1.6 runtime and passes against rebuilt local bundles, including replay/foreign-owner refusal and independent gates. Final full-suite verification is recorded separately in `verification.md`; source manifests are versioned 0.1.7, without installation or publication.
 
 Preparation and verification validate the policy and reject a conflicting task check with the same ID. Identical definitions execute once. Verification reads the current policy, so an already-prepared task cannot omit newly configured mandatory checks. Source/contract/catalog/policy freshness revokes old evidence when the configuration changes; a task prepared with a policy fails closed if that policy disappears. Analysis creates no policy and executes nothing. This development workspace is explicitly configured with mandatory unit, feature and build checks in its ignored local policy file; existing installed 0.1.6 processes are not upgraded or claimed to enforce that policy. The existing exact exceptions, generated-root exclusions and native trusted bindings remain unchanged.
+
+## Target independence — unreleased local 0.1.8
+
+Native PreToolUse schema-2 capabilities bind the original chat workspace and explicit canonical target separately. Any user-authorized absolute directory permitted by the host is a valid target, with no cwd/descendant restriction. Trusted launcher workspace still identifies its session origin, not a target fence. Existing schema-1 requests keep their original target==workspace meaning. Every mutation retains owner/generation and exact target validation; learning follows the active owner task and Stop follows durable project bindings. A second prepare denied by active ownership cannot write a phantom project into the Stop binding. Source metadata is 0.1.8. The user subsequently authorized the local plugin-manager update to 0.1.8; the old source/cache and personal data are preserved, and installed bundle hashes match. After an explicitly authorized Desktop restart, process inspection confirmed the active 0.1.8 MCP and no old 0.1.6 MCPs. The user authorized adding this change to the existing review PR. Actual model-driven continuation of the affected task remains a separate acceptance boundary.
 
 ## Verification and activation
 

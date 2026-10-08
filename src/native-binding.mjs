@@ -30,13 +30,15 @@ export async function issueBinding(event, home = catalogHome()) {
   if (typeof event.tool_use_id !== 'string' || !event.tool_use_id || event.tool_use_id.length > 256) throw new Error('Native binding requires host tool call identity.');
   if (typeof event.cwd !== 'string' || !path.isAbsolute(event.cwd)) throw new Error('Native binding requires absolute host workspace.');
   const workspace = await realpath(event.cwd);
+  let targetProject;
   if (method !== 'scar_learn') {
-    if (typeof input.project !== 'string' || !path.isAbsolute(input.project) || await realpath(input.project) !== workspace) throw new Error('Implementation project must match the current verified host workspace.');
+    if (typeof input.project !== 'string' || !path.isAbsolute(input.project)) throw new Error('Native binding requires an absolute target project.');
+    targetProject = await realpath(input.project);
   }
   const token = randomBytes(32).toString('hex');
   const directory = path.join(home, 'request-bindings');
   await mkdir(directory, { recursive: true, mode: 0o700 });
-  await writeFile(path.join(directory, token + '.json'), JSON.stringify({ schema: 1, sessionId, workspace, method, toolCallId: event.tool_use_id, fingerprint: fingerprint(method, input), expiresAt: Date.now() + 60000 }), { flag: 'wx', mode: 0o600 });
+  await writeFile(path.join(directory, token + '.json'), JSON.stringify({ schema: 2, sessionId, workspace, ...(targetProject ? { targetProject } : {}), method, toolCallId: event.tool_use_id, fingerprint: fingerprint(method, input), expiresAt: Date.now() + 60000 }), { flag: 'wx', mode: 0o600 });
   return { hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput: { ...input, [field]: token } } };
 }
 
@@ -52,11 +54,16 @@ export async function consumeBinding(method, input, home = catalogHome()) {
     if (!info.isFile() || info.isSymbolicLink() || info.size > 16384) throw new Error('Invalid native binding file.');
     const record = await readJson(claimed, null, { maxBytes: 16384 });
     const { [field]: ignored, ...args } = params(input);
-    if (!record || record.schema !== 1 || record.method !== method || !operations.has(method) || record.fingerprint !== fingerprint(method, args)) throw new Error('Native binding does not match method or arguments.');
+    if (!record || ![1, 2].includes(record.schema) || record.method !== method || !operations.has(method) || record.fingerprint !== fingerprint(method, args)) throw new Error('Native binding does not match method or arguments.');
     if (!Number.isSafeInteger(record.expiresAt) || record.expiresAt < Date.now() || record.expiresAt > Date.now() + 60000) throw new Error('Native binding expired or invalid.');
     const sessionId = trustedSession(record.sessionId);
     if ((!readOperations.has(method) && reviewerSession(sessionId)) || typeof record.workspace !== 'string' || !path.isAbsolute(record.workspace) || !record.toolCallId) throw new Error('Invalid native owner binding.');
-    if (method !== 'scar_learn' && await realpath(args.project) !== record.workspace) throw new Error('Native binding project mismatch.');
-    return { scoped: true, sessionId, workspace: record.workspace };
+    let targetProject;
+    if (method !== 'scar_learn') {
+      targetProject = record.schema === 1 ? record.workspace : record.targetProject;
+      if (typeof targetProject !== 'string' || !path.isAbsolute(targetProject) || typeof args.project !== 'string' || !path.isAbsolute(args.project)) throw new Error('Invalid native target project binding.');
+      if (await realpath(args.project) !== targetProject) throw new Error('Native binding project mismatch.');
+    }
+    return { scoped: true, sessionId, workspace: record.workspace, ...(targetProject ? { targetProject } : {}) };
   } finally { await rm(claimed, { force: true }); }
 }
