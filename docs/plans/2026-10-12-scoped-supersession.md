@@ -24,9 +24,9 @@
 - [x] Minimal implementation and GREEN focused tests.
 - [x] Document API/lifecycle and keep original suites.
 - [x] Full unit/build/feature checks; simplify; independent review; learning review; fresh READY.
-- [ ] Commit/push GitHub; update Codex plugin; verify installed hashes and real synthetic MCP/CLI/Stop.
-- [ ] Apply explicit replacement only to obsolete scopes after fresh successor proof; preserve history and current release gate.
-- [ ] Cleanup owned test resources; Wiki and readback.
+- [x] Commit/push GitHub; update Codex plugin; verify installed hashes and real synthetic MCP/CLI/Stop.
+- [x] Apply explicit replacement only to obsolete scopes after fresh successor proof; preserve history and current release gate.
+- [x] Cleanup owned test resources; Wiki and readback. Four policy-rejected synthetic directories retained and reported.
 
 ## Decisions
 
@@ -43,3 +43,5 @@ Original unit RED executed11 cases; actual CLI/MCP RED executed2. Independent re
 Simplify: NO_CHANGES after the complete source/test/doc diff; helpers and validation ordering retained. Existing catalog unchanged; semantic persistence/generation invariants are proved by project-owned actual filesystem/CLI/MCP regressions rather than an unproven lexical detector.
 
 Windows TEMP short-path aliases are covered by canonicalized fixture roots. Fault-injection waits reject early operation failures rather than waiting indefinitely. Test-owned process cleanup and retained-resource limitations are recorded privately.
+
+Publication and installation acceptance completed:123 project tests pass, shipped CLI/MCP/native hooks pass three real boundary cases from the installed plugin directory. Four explicitly replaced generations retain their original evidence bytes and private hash-bound receipts. The replacement implementation and release operator remain active and require fresh READY. Existing pooled MCP processes were preserved; a new connection exposes the new tool.

@@ -34,4 +34,4 @@ Activation remains separate: Codex requires one-time trust of the reviewed hooks
 - [x] Prove real MCP/native hook multi-worktree and concurrency boundaries; publish GitHub and verify installed bundles.
 
 - [x] Explicit audited supersession: keep failed task evidence, require fresh READY replacement with retained checks/classes, preserve active generation enforcement.
-- [ ] Prove supersession through real CLI/MCP/native Stop, failure recovery and generation races; publish and update installed Codex plugin.
+- [x] Prove supersession through real CLI/MCP/native Stop, failure recovery and generation races; publish and update installed Codex plugin.
