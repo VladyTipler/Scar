@@ -3,6 +3,7 @@ import { taskFiles, validateBinding } from './task-scope.mjs';
 import { freshStatus } from './evidence.mjs';
 import { PersonalCatalog } from './sharing.mjs';
 import { compactReport } from './presentation.mjs';
+import {validateSupersession} from './supersession.mjs';
 
 export async function stopSession(binding, file, event, home, io) {
   validateBinding(binding, event.cwd, event.session_id);
@@ -11,6 +12,11 @@ export async function stopSession(binding, file, event, home, io) {
   for (const entry of binding.projects) {
     const gateFile = projectGateFile(home, entry.project, event.session_id);
     const gate = await readJson(gateFile, null, io);
+    if(entry.supersession||gate?.disposition==='SUPERSEDED'){
+      if(gate?.schema!==1||gate.active!==false||gate.runId!==entry.runId||gate.disposition!=='SUPERSEDED'||digest(gate.supersession)!==digest(entry.supersession)) return 'Scar INCOMPLETE: supersession transition is pending or changed; use the exact supersession receipt to recover.';
+      await validateSupersession(home,entry.supersession,entry,binding,io);
+      continue;
+    }
     if (gate?.schema === 1 && gate.active === false && gate.runId === entry.runId) continue;
     const contract = await readJson(taskFiles(entry.project, event.session_id).contract, null, io);
     if (!gate || gate.schema !== 1 || typeof gate.active !== 'boolean' || gate.runId !== entry.runId || !contract || contract.runId !== entry.runId || contract.sessionId !== event.session_id) return 'Scar INCOMPLETE: this chat has missing or changed scoped verification evidence. Run scar_prepare and scar_finish with its sessionId and hostProject.';

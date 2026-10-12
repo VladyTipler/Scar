@@ -3,12 +3,13 @@ import { randomUUID } from 'node:crypto';
 import { executeDetector } from './catalog.mjs';
 import { PersonalCatalog } from './sharing.mjs';
 import { scan } from './workspace.mjs';
-import { atomicJson, readJson, catalogHome, withLock, projectGateFile } from './io.mjs';
+import { atomicJson, readJson, catalogHome, withLock, projectGateFile, digest } from './io.mjs';
 import { workspaceContext, evidenceBinding, freshStatus } from './evidence.mjs';
 import { runCheck, validateCheck } from './process.mjs';
 import { discoverChecks } from './discovery.mjs';
 import { preventionContext } from './presentation.mjs';
 import {taskFiles,bindingFile,validateBinding,validateSession,projectIdentity,maxSessionProjects} from './task-scope.mjs';
+import {supersede} from './supersession.mjs';
 
 export class Workflow {
   constructor(home = catalogHome(),scope={}) {
@@ -72,7 +73,7 @@ export class Workflow {
       if (!before.contract || checks.length === 0) status = 'INCOMPLETE';
       if (findings.length || errors.length || checks.some(c => c.status !== 'PASS')) status = 'FAIL';
       if (before.binding !== after.binding) status = 'STALE';
-      const report = { schema: 1, status, binding: before.binding, findings, errors, acceptedExceptions: native.acceptedExceptions, checks, classes: before.classes.map(c => c.id), coverage: 'Declared detector shapes and configured project checks only.',evidence:path.relative(before.state.root,this.files(project).report).split(path.sep).join('/') };
+      const report = { schema: 1, status, binding: before.binding, runId: before.contract?.runId, contractDigest: digest(before.contract), findings, errors, acceptedExceptions: native.acceptedExceptions, checks, classes: before.classes.map(c => c.id), coverage: 'Declared detector shapes and configured project checks only.',evidence:path.relative(before.state.root,this.files(project).report).split(path.sep).join('/') };
       await atomicJson(this.files(project).report, report);
       return report;
     });
@@ -87,4 +88,5 @@ export class Workflow {
     return await freshStatus(project, this.catalog, {...options,sessionId:this.sessionId});
   }
   async finish(project) { await this.verify(project); return await this.status(project); }
+  async supersede(project, options) { return await supersede(this, project, options); }
 }

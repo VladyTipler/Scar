@@ -1,5 +1,5 @@
 {
-  "cli.cjs": "cf5eb71bfd3cbfdee3bdf23b99763b04671986fb9766ff120fa9a7c88846ebcf",
-  "hook.cjs": "786fe849c69bdd9b91891eed24c9759a6a8d69318aacd68402e71d7ce922ad18",
-  "mcp.cjs": "e9fbc5e8db096e85ed501236531a26056cc9a63fb7b687d9b8fe738621b94cfd"
+  "cli.cjs": "fd900e7b4e172be69e35fcb89e9bedc4ae68a786fddb86699091406bb615e6df",
+  "hook.cjs": "26c5a7b29500110f87a5e576a863524024e72b26611ca54dec8de1cc86da6bd5",
+  "mcp.cjs": "8e15e449edd68265c99877bbdfe270f48c9ff2cd3c554cb9a7c98e61ba22ca7d"
 }

@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, rename, rm, stat } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, rename, rm, stat, open } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { homedir } from 'node:os';
@@ -13,12 +13,18 @@ export async function readJson(file, fallback, { signal, maxBytes } = {}) {
   }
   catch (error) { if (error.code === 'ENOENT' && fallback !== undefined) return fallback; throw error; }
 }
-export async function atomicJson(file, value, { signal } = {}) {
+export async function atomicJson(file, value, { signal, durable = false } = {}) {
   await abortable(() => mkdir(path.dirname(file), { recursive: true }), signal);
   const temporary = `${file}.${randomUUID()}.tmp`;
   try {
     signal?.throwIfAborted();
-    await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o600, signal });
+    const bytes = `${JSON.stringify(value, null, 2)}\n`;
+    if (durable) {
+      const handle = await open(temporary, 'wx', 0o600);
+      try { await handle.writeFile(bytes, { signal }); await handle.sync(); }
+      finally { await handle.close(); }
+      if (await readFile(temporary, 'utf8') !== bytes) throw new Error('Durable JSON readback differs.');
+    } else await writeFile(temporary, bytes, { flag: 'wx', mode: 0o600, signal });
     signal?.throwIfAborted();
     await rename(temporary, file);
   } finally { await rm(temporary, { force: true }); }
